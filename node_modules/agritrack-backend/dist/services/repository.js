@@ -1,4 +1,5 @@
 import { get, push, ref, remove, set, update } from "firebase/database";
+import { readLocalNode, removeLocalNode, updateLocalNode, writeLocalNode } from "../db/localStore.js";
 import { realtimeDb } from "../db/firebase.js";
 const counterDefaults = {
     users: 0,
@@ -8,18 +9,59 @@ const counterDefaults = {
     positions: 0,
     alerts: 0
 };
+let storageMode = "firebase";
 function collectionRef(name) {
     return ref(realtimeDb, name);
 }
 async function readNode(path) {
-    const snapshot = await get(ref(realtimeDb, path));
-    return snapshot.exists() ? snapshot.val() : null;
+    if (storageMode === "local-fallback") {
+        return readLocalNode(path);
+    }
+    try {
+        const snapshot = await get(ref(realtimeDb, path));
+        return snapshot.exists() ? snapshot.val() : null;
+    }
+    catch (error) {
+        if (error instanceof Error && error.message.includes("Permission denied")) {
+            storageMode = "local-fallback";
+            return readLocalNode(path);
+        }
+        throw error;
+    }
 }
 async function writeNode(path, value) {
-    await set(ref(realtimeDb, path), value);
+    if (storageMode === "local-fallback") {
+        await writeLocalNode(path, value);
+        return;
+    }
+    try {
+        await set(ref(realtimeDb, path), value);
+    }
+    catch (error) {
+        if (error instanceof Error && error.message.includes("Permission denied")) {
+            storageMode = "local-fallback";
+            await writeLocalNode(path, value);
+            return;
+        }
+        throw error;
+    }
 }
 async function updateNode(path, value) {
-    await update(ref(realtimeDb, path), value);
+    if (storageMode === "local-fallback") {
+        await updateLocalNode(path, value);
+        return;
+    }
+    try {
+        await update(ref(realtimeDb, path), value);
+    }
+    catch (error) {
+        if (error instanceof Error && error.message.includes("Permission denied")) {
+            storageMode = "local-fallback";
+            await updateLocalNode(path, value);
+            return;
+        }
+        throw error;
+    }
 }
 async function ensureCounters() {
     const meta = (await readNode("meta")) ?? {};
@@ -41,8 +83,8 @@ export async function insertWithIncrement(name, item) {
     const counters = await ensureCounters();
     const id = counters[name] + 1;
     const record = { id, ...item };
-    const nodeRef = push(collectionRef(name));
-    await set(nodeRef, record);
+    const nodeRef = storageMode === "firebase" ? push(collectionRef(name)).key : `local-${id}`;
+    await writeNode(`${name}/${nodeRef}`, record);
     await updateNode("meta/counters", { [name]: id });
     return record;
 }
@@ -59,6 +101,44 @@ export async function updateWhereId(name, id, updater) {
     const next = updater(current);
     await writeNode(`${name}/${key}`, next);
     return next;
+}
+export async function patchWhereId(name, id, patch) {
+    return updateWhereId(name, id, (current) => ({ ...current, ...patch }));
+}
+export async function deleteWhereId(name, id) {
+    const node = await readNode(name);
+    if (!node) {
+        return false;
+    }
+    const entry = Object.entries(node).find(([, value]) => value.id === id);
+    if (!entry) {
+        return false;
+    }
+    const [key] = entry;
+    if (storageMode === "local-fallback") {
+        await removeLocalNode(`${name}/${key}`);
+    }
+    else {
+        try {
+            await remove(ref(realtimeDb, `${name}/${key}`));
+        }
+        catch (error) {
+            if (error instanceof Error && error.message.includes("Permission denied")) {
+                storageMode = "local-fallback";
+                await removeLocalNode(`${name}/${key}`);
+            }
+            else {
+                throw error;
+            }
+        }
+    }
+    return true;
+}
+export async function readSingleton(name) {
+    return readNode(name);
+}
+export async function writeSingleton(name, value) {
+    await writeNode(name, value);
 }
 export async function overwriteCollection(name, value) {
     await remove(collectionRef(name));

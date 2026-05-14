@@ -1,8 +1,9 @@
 import { get, push, ref, remove, set, update } from "firebase/database";
+import { readLocalNode, removeLocalNode, updateLocalNode, writeLocalNode } from "../db/localStore.js";
 import { realtimeDb } from "../db/firebase.js";
-import type { Alert, Device, Geofence, Position, Property } from "../types/index.js";
+import type { Alert, Device, Geofence, Position, Property, SimulatorState } from "../types/index.js";
 
-type CollectionName = "users" | "properties" | "devices" | "geofences" | "positions" | "alerts" | "meta";
+type CollectionName = "users" | "properties" | "devices" | "geofences" | "positions" | "alerts" | "meta" | "simulator";
 
 type User = {
   id: number;
@@ -32,7 +33,10 @@ type CollectionMap = {
   positions: Position;
   alerts: Alert;
   meta: Meta;
+  simulator: SimulatorState;
 };
+
+type IncrementalCollectionName = "users" | "properties" | "devices" | "geofences" | "positions" | "alerts";
 
 const counterDefaults: Counters = {
   users: 0,
@@ -43,21 +47,63 @@ const counterDefaults: Counters = {
   alerts: 0
 };
 
+let storageMode: "firebase" | "local-fallback" = "firebase";
+
 function collectionRef(name: CollectionName) {
   return ref(realtimeDb, name);
 }
 
 async function readNode<T>(path: string): Promise<T | null> {
-  const snapshot = await get(ref(realtimeDb, path));
-  return snapshot.exists() ? (snapshot.val() as T) : null;
+  if (storageMode === "local-fallback") {
+    return readLocalNode<T>(path);
+  }
+
+  try {
+    const snapshot = await get(ref(realtimeDb, path));
+    return snapshot.exists() ? (snapshot.val() as T) : null;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Permission denied")) {
+      storageMode = "local-fallback";
+      return readLocalNode<T>(path);
+    }
+    throw error;
+  }
 }
 
 async function writeNode(path: string, value: unknown) {
-  await set(ref(realtimeDb, path), value);
+  if (storageMode === "local-fallback") {
+    await writeLocalNode(path, value);
+    return;
+  }
+
+  try {
+    await set(ref(realtimeDb, path), value);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Permission denied")) {
+      storageMode = "local-fallback";
+      await writeLocalNode(path, value);
+      return;
+    }
+    throw error;
+  }
 }
 
 async function updateNode(path: string, value: Record<string, unknown>) {
-  await update(ref(realtimeDb, path), value);
+  if (storageMode === "local-fallback") {
+    await updateLocalNode(path, value);
+    return;
+  }
+
+  try {
+    await update(ref(realtimeDb, path), value);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Permission denied")) {
+      storageMode = "local-fallback";
+      await updateLocalNode(path, value);
+      return;
+    }
+    throw error;
+  }
 }
 
 async function ensureCounters() {
@@ -75,7 +121,7 @@ export async function listCollection<K extends CollectionName>(
   return values as K extends "meta" ? Meta[] : CollectionMap[K][];
 }
 
-export async function getById<K extends Exclude<CollectionName, "meta">>(
+export async function getById<K extends IncrementalCollectionName>(
   name: K,
   id: number
 ): Promise<CollectionMap[K] | null> {
@@ -84,22 +130,21 @@ export async function getById<K extends Exclude<CollectionName, "meta">>(
   return found;
 }
 
-export async function insertWithIncrement<K extends Exclude<CollectionName, "meta">>(
+export async function insertWithIncrement<K extends IncrementalCollectionName>(
   name: K,
   item: Omit<CollectionMap[K], "id">
 ): Promise<CollectionMap[K]> {
   const counters = await ensureCounters();
   const id = counters[name] + 1;
   const record = { id, ...item } as CollectionMap[K];
-  const nodeRef = push(collectionRef(name));
-
-  await set(nodeRef, record);
+  const nodeRef = storageMode === "firebase" ? push(collectionRef(name)).key : `local-${id}`;
+  await writeNode(`${name}/${nodeRef}`, record);
   await updateNode("meta/counters", { [name]: id });
 
   return record;
 }
 
-export async function updateWhereId<K extends Exclude<CollectionName, "meta">>(
+export async function updateWhereId<K extends IncrementalCollectionName>(
   name: K,
   id: number,
   updater: (item: CollectionMap[K]) => CollectionMap[K]
@@ -118,6 +163,51 @@ export async function updateWhereId<K extends Exclude<CollectionName, "meta">>(
   const next = updater(current);
   await writeNode(`${name}/${key}`, next);
   return next;
+}
+
+export async function patchWhereId<K extends IncrementalCollectionName>(
+  name: K,
+  id: number,
+  patch: Partial<CollectionMap[K]>
+) {
+  return updateWhereId(name, id, (current) => ({ ...current, ...patch }));
+}
+
+export async function deleteWhereId<K extends IncrementalCollectionName>(name: K, id: number) {
+  const node = await readNode<Record<string, CollectionMap[K]>>(name);
+  if (!node) {
+    return false;
+  }
+
+  const entry = Object.entries(node).find(([, value]) => value.id === id);
+  if (!entry) {
+    return false;
+  }
+
+  const [key] = entry;
+  if (storageMode === "local-fallback") {
+    await removeLocalNode(`${name}/${key}`);
+  } else {
+    try {
+      await remove(ref(realtimeDb, `${name}/${key}`));
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("Permission denied")) {
+        storageMode = "local-fallback";
+        await removeLocalNode(`${name}/${key}`);
+      } else {
+        throw error;
+      }
+    }
+  }
+  return true;
+}
+
+export async function readSingleton<K extends CollectionName>(name: K): Promise<CollectionMap[K] | null> {
+  return readNode<CollectionMap[K]>(name);
+}
+
+export async function writeSingleton<K extends CollectionName>(name: K, value: CollectionMap[K]) {
+  await writeNode(name, value);
 }
 
 export async function overwriteCollection<K extends CollectionName>(name: K, value: Record<string, CollectionMap[K]>) {

@@ -14,6 +14,7 @@ export function GeofencePage() {
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [coordinates, setCoordinates] = useState<[number, number][]>([]);
   const [feedback, setFeedback] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     name: "Área de Trabalho 01",
     propertyId: 1,
@@ -43,9 +44,15 @@ export function GeofencePage() {
       setFeedback("A cerca precisa de pelo menos 3 pontos.");
       return;
     }
-    await api.createGeofence({ ...form, coordinates });
+    if (editingId) {
+      await api.updateGeofence(editingId, { ...form, coordinates });
+      setFeedback("Cerca virtual atualizada com sucesso.");
+    } else {
+      await api.createGeofence({ ...form, coordinates });
+      setFeedback("Cerca virtual salva com sucesso.");
+    }
     setCoordinates([]);
-    setFeedback("Cerca virtual salva com sucesso.");
+    setEditingId(null);
     load();
   }
 
@@ -89,7 +96,7 @@ export function GeofencePage() {
           </div>
           <div className="flex gap-3">
             <button type="submit" className="rounded-2xl bg-brand-500 px-4 py-3 font-semibold text-white">
-              Salvar cerca
+              {editingId ? "Atualizar cerca" : "Salvar cerca"}
             </button>
             <button
               type="button"
@@ -98,6 +105,20 @@ export function GeofencePage() {
             >
               Limpar pontos
             </button>
+            {editingId ? (
+              <button
+                type="button"
+                className="rounded-2xl border border-slate-200 px-4 py-3 font-semibold text-slate-700"
+                onClick={() => {
+                  setEditingId(null);
+                  setCoordinates([]);
+                  setForm({ name: "Área de Trabalho 01", propertyId: properties[0]?.id ?? 1, deviceId: devices[0]?.id ?? 1 });
+                  setFeedback("");
+                }}
+              >
+                Cancelar edição
+              </button>
+            ) : null}
           </div>
           {feedback ? <p className="text-sm text-slate-500">{feedback}</p> : null}
         </form>
@@ -107,6 +128,37 @@ export function GeofencePage() {
             <div key={geofence.id} className="rounded-2xl border border-slate-200 p-4">
               <p className="font-semibold text-slate-850">{geofence.name}</p>
               <p className="text-sm text-slate-500">{geofence.coordinates.length} pontos cadastrados</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  className="rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700"
+                  onClick={() => {
+                    setEditingId(geofence.id);
+                    setForm({
+                      name: geofence.name,
+                      propertyId: geofence.propertyId,
+                      deviceId: geofence.deviceId
+                    });
+                    setCoordinates(geofence.coordinates);
+                    setFeedback("Modo edição ativo. Ajuste os pontos no mapa se necessário.");
+                  }}
+                >
+                  Editar
+                </button>
+                <button
+                  className="rounded-full bg-rose-600 px-3 py-2 text-xs font-semibold text-white"
+                  onClick={async () => {
+                    await api.deleteGeofence(geofence.id);
+                    if (editingId === geofence.id) {
+                      setEditingId(null);
+                      setCoordinates([]);
+                    }
+                    setFeedback("Cerca removida.");
+                    load();
+                  }}
+                >
+                  Excluir
+                </button>
+              </div>
             </div>
           ))}
         </div>

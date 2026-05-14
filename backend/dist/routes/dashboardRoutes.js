@@ -22,7 +22,10 @@ dashboardRoutes.get("/", async (_request, response) => {
             statusSummary: {
                 inside,
                 outside
-            }
+            },
+            latestTelemetryAgeMinutes: lastPosition
+                ? Math.max(0, Math.round((Date.now() - new Date(lastPosition.recordedAt).getTime()) / 60000))
+                : null
         });
     }
     catch (error) {

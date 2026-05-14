@@ -49,14 +49,17 @@ npm run dev
 
 - Login simples para protótipo
 - Cadastro de propriedades e tratores
+- Edição e exclusão de propriedades, tratores e cercas
 - Dashboard com total de tratores, online, última posição e status
 - Mapa com OpenStreetMap e marcador em tempo real
 - Simulador GPS movendo o trator automaticamente
+- Painel de demonstração com iniciar, pausar, avançar, resetar e forçar saída da cerca
 - Geofence com criação por clique no mapa
 - Detecção de saída da cerca virtual
 - Histórico de posições com filtros
 - Registro e visualização de alertas
 - Simulação de envio de alerta para WhatsApp
+- Endpoint de telemetria real para integração com ESP32 ou outro gateway
 
 ## Fluxo da simulação
 
@@ -83,6 +86,13 @@ Alerta AgriTrack: o trator [NOME] saiu da cerca virtual [NOME_DA_CERCA] às [HOR
 - `GET /api/alerts`
 - `GET /api/dashboard`
 - `GET /api/realtime`
+- `POST /api/telemetry`
+- `GET/PUT /api/simulator`
+- `POST /api/simulator/start`
+- `POST /api/simulator/pause`
+- `POST /api/simulator/reset`
+- `POST /api/simulator/step`
+- `POST /api/simulator/force-exit`
 - `WS ws://localhost:4000`
 
 ## Integrações futuras
@@ -98,7 +108,7 @@ Alerta AgriTrack: o trator [NOME] saiu da cerca virtual [NOME_DA_CERCA] às [HOR
 
 - O ESP32 pode ler latitude/longitude do NEO-6M.
 - O SIM800L pode enviar os dados por HTTP ou MQTT.
-- Um endpoint futuro no backend pode receber payloads como:
+- O protótipo já expõe um endpoint para isso:
 
 ```json
 {
@@ -109,7 +119,8 @@ Alerta AgriTrack: o trator [NOME] saiu da cerca virtual [NOME_DA_CERCA] às [HOR
 }
 ```
 
-- Esses dados podem ser persistidos diretamente ou encaminhados ao Traccar.
+- Esses dados entram no mesmo fluxo do simulador, atualizam mapa, histórico e alertas em tempo real.
+- No futuro, eles podem ser persistidos diretamente ou encaminhados ao Traccar.
 
 ### WhatsApp
 
@@ -120,6 +131,9 @@ Alerta AgriTrack: o trator [NOME] saiu da cerca virtual [NOME_DA_CERCA] às [HOR
 ## Observações técnicas
 
 - O backend usa o Firebase Realtime Database informado na configuração do projeto.
-- O simulador está em `backend/src/services/gpsSimulator.ts`.
+- Se o Firebase responder com `Permission denied`, o backend entra automaticamente em modo demo local e persiste em `backend/agritrack-demo-store.json`.
+- O fluxo do simulador está em `backend/src/services/simulatorService.ts`.
+- O controle do simulador está em `backend/src/services/simulatorService.ts`.
+- A ingestão de telemetria está em `backend/src/services/telemetryService.ts`.
 - A lógica de geofence está em `backend/src/services/geofenceService.ts`.
 - O projeto foi estruturado para facilitar a troca do backend simulado por Traccar no futuro.

@@ -2,6 +2,7 @@ import { Activity, AlertTriangle, MapPin, Radio } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AlertBanner } from "../components/AlertBanner";
 import { Card } from "../components/Card";
+import { SimulatorControlPanel } from "../components/SimulatorControlPanel";
 import { StatusBadge } from "../components/StatusBadge";
 import { useRealtime } from "../hooks/useRealtime";
 import { api } from "../services/api";
@@ -11,8 +12,13 @@ export function DashboardPage() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const { snapshot, latestAlert, connectionState, lastMessageAt } = useRealtime();
 
+  async function refreshDashboard() {
+    const data = await api.getDashboard();
+    setDashboard(data);
+  }
+
   useEffect(() => {
-    api.getDashboard().then(setDashboard);
+    refreshDashboard();
   }, [snapshot?.latestPosition.id]);
 
   return (
@@ -137,6 +143,29 @@ export function DashboardPage() {
           ) : (
             <p className="text-sm text-slate-500">Aguardando conexão em tempo real.</p>
           )}
+        </Card>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <SimulatorControlPanel snapshot={snapshot} onRefresh={refreshDashboard} />
+        <Card title="Qualidade da telemetria">
+          <div className="space-y-4">
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Idade da última posição</p>
+              <p className="mt-2 text-2xl font-bold text-slate-850">
+                {dashboard?.latestTelemetryAgeMinutes ?? 0} min
+              </p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Origem operacional</p>
+              <p className="mt-2 text-base font-semibold text-slate-850">
+                {snapshot?.simulator.mode === "running" ? "Simulador automático ativo" : "Pronto para telemetria manual"}
+              </p>
+            </div>
+            <p className="text-sm text-slate-600">
+              O mesmo fluxo de backend agora aceita telemetria do simulador e também posições reais via `POST /api/telemetry`.
+            </p>
+          </div>
         </Card>
       </section>
     </div>

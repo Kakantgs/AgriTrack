@@ -1,0 +1,798 @@
+{
+  "meta": {
+    "counters": {
+      "users": 1,
+      "properties": 1,
+      "devices": 1,
+      "geofences": 1,
+      "positions": 72,
+      "alerts": 7
+    }
+  },
+  "users": {
+    "local-1": {
+      "id": 1,
+      "email": "admin@agritrack.com",
+      "password": "123456",
+      "name": "Administrador AgriTrack"
+    }
+  },
+  "properties": {
+    "local-1": {
+      "id": 1,
+      "name": "Sítio Santa Luzia",
+      "location": "Juiz de Fora - MG",
+      "areaHectares": 124
+    }
+  },
+  "devices": {
+    "local-1": {
+      "id": 1,
+      "name": "Trator Massey 275",
+      "plate": "AGT-0275",
+      "deviceCode": "ESP32-GPS-001",
+      "status": "active",
+      "propertyId": 1,
+      "propertyName": "Sítio Santa Luzia",
+      "lastLatitude": -21.7311,
+      "lastLongitude": -43.3473,
+      "lastUpdatedAt": "2026-05-14T22:14:02.662Z",
+      "geofenceStatus": "inside",
+      "online": true
+    }
+  },
+  "geofences": {
+    "local-1": {
+      "id": 1,
+      "name": "Área de Trabalho 01",
+      "propertyId": 1,
+      "deviceId": 1,
+      "coordinates": [
+        [
+          -21.732715,
+          -43.349583
+        ],
+        [
+          -21.732715,
+          -43.345783
+        ],
+        [
+          -21.729715,
+          -43.345783
+        ],
+        [
+          -21.729715,
+          -43.349583
+        ]
+      ]
+    }
+  },
+  "positions": {
+    "local-1": {
+      "id": 1,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7317,
+      "longitude": -43.3488,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:08:09.054Z"
+    },
+    "local-2": {
+      "id": 2,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7317,
+      "longitude": -43.3488,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:08:14.089Z"
+    },
+    "local-3": {
+      "id": 3,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7312,
+      "longitude": -43.3478,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:08:22.116Z"
+    },
+    "local-4": {
+      "id": 4,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7308,
+      "longitude": -43.3469,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:08:27.119Z"
+    },
+    "local-5": {
+      "id": 5,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7302,
+      "longitude": -43.3461,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:08:32.124Z"
+    },
+    "local-6": {
+      "id": 6,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7298,
+      "longitude": -43.3455,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:08:37.137Z"
+    },
+    "local-7": {
+      "id": 7,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7292,
+      "longitude": -43.3449,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:08:42.152Z"
+    },
+    "local-8": {
+      "id": 8,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7288,
+      "longitude": -43.3441,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:08:47.166Z"
+    },
+    "local-9": {
+      "id": 9,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7294,
+      "longitude": -43.3448,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:08:52.176Z"
+    },
+    "local-10": {
+      "id": 10,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.73195,
+      "longitude": -43.34765,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:08:54.902Z"
+    },
+    "local-11": {
+      "id": 11,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7303,
+      "longitude": -43.346,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:08:57.189Z"
+    },
+    "local-12": {
+      "id": 12,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7311,
+      "longitude": -43.3473,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:09:02.203Z"
+    },
+    "local-13": {
+      "id": 13,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7317,
+      "longitude": -43.3488,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:09:07.204Z"
+    },
+    "local-14": {
+      "id": 14,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7312,
+      "longitude": -43.3478,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:09:12.217Z"
+    },
+    "local-15": {
+      "id": 15,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7308,
+      "longitude": -43.3469,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:09:17.221Z"
+    },
+    "local-16": {
+      "id": 16,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7302,
+      "longitude": -43.3461,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:09:22.234Z"
+    },
+    "local-17": {
+      "id": 17,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7298,
+      "longitude": -43.3455,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:09:27.244Z"
+    },
+    "local-18": {
+      "id": 18,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7292,
+      "longitude": -43.3449,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:09:32.249Z"
+    },
+    "local-19": {
+      "id": 19,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7288,
+      "longitude": -43.3441,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:09:37.264Z"
+    },
+    "local-20": {
+      "id": 20,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7294,
+      "longitude": -43.3448,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:09:42.266Z"
+    },
+    "local-21": {
+      "id": 21,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7303,
+      "longitude": -43.346,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:09:47.281Z"
+    },
+    "local-22": {
+      "id": 22,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7311,
+      "longitude": -43.3473,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:09:52.293Z"
+    },
+    "local-23": {
+      "id": 23,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7317,
+      "longitude": -43.3488,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:09:57.304Z"
+    },
+    "local-24": {
+      "id": 24,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7312,
+      "longitude": -43.3478,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:10:02.308Z"
+    },
+    "local-25": {
+      "id": 25,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7308,
+      "longitude": -43.3469,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:10:07.307Z"
+    },
+    "local-26": {
+      "id": 26,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7302,
+      "longitude": -43.3461,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:10:12.318Z"
+    },
+    "local-27": {
+      "id": 27,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7298,
+      "longitude": -43.3455,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:10:17.324Z"
+    },
+    "local-28": {
+      "id": 28,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7292,
+      "longitude": -43.3449,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:10:22.339Z"
+    },
+    "local-29": {
+      "id": 29,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7288,
+      "longitude": -43.3441,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:10:27.341Z"
+    },
+    "local-30": {
+      "id": 30,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7294,
+      "longitude": -43.3448,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:10:32.351Z"
+    },
+    "local-31": {
+      "id": 31,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7303,
+      "longitude": -43.346,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:10:37.353Z"
+    },
+    "local-32": {
+      "id": 32,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7311,
+      "longitude": -43.3473,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:10:42.353Z"
+    },
+    "local-33": {
+      "id": 33,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7317,
+      "longitude": -43.3488,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:10:47.368Z"
+    },
+    "local-34": {
+      "id": 34,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7312,
+      "longitude": -43.3478,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:10:52.371Z"
+    },
+    "local-35": {
+      "id": 35,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7308,
+      "longitude": -43.3469,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:10:57.382Z"
+    },
+    "local-36": {
+      "id": 36,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7302,
+      "longitude": -43.3461,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:11:02.388Z"
+    },
+    "local-37": {
+      "id": 37,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7298,
+      "longitude": -43.3455,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:11:07.400Z"
+    },
+    "local-38": {
+      "id": 38,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7292,
+      "longitude": -43.3449,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:11:12.402Z"
+    },
+    "local-39": {
+      "id": 39,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7288,
+      "longitude": -43.3441,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:11:17.411Z"
+    },
+    "local-40": {
+      "id": 40,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7294,
+      "longitude": -43.3448,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:11:22.419Z"
+    },
+    "local-41": {
+      "id": 41,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7303,
+      "longitude": -43.346,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:11:27.433Z"
+    },
+    "local-42": {
+      "id": 42,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7311,
+      "longitude": -43.3473,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:11:32.443Z"
+    },
+    "local-43": {
+      "id": 43,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7317,
+      "longitude": -43.3488,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:11:37.445Z"
+    },
+    "local-44": {
+      "id": 44,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7312,
+      "longitude": -43.3478,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:11:42.459Z"
+    },
+    "local-45": {
+      "id": 45,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7308,
+      "longitude": -43.3469,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:11:47.467Z"
+    },
+    "local-46": {
+      "id": 46,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7302,
+      "longitude": -43.3461,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:11:52.475Z"
+    },
+    "local-47": {
+      "id": 47,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7298,
+      "longitude": -43.3455,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:11:57.484Z"
+    },
+    "local-48": {
+      "id": 48,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7292,
+      "longitude": -43.3449,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:12:02.486Z"
+    },
+    "local-49": {
+      "id": 49,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7288,
+      "longitude": -43.3441,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:12:07.495Z"
+    },
+    "local-50": {
+      "id": 50,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7294,
+      "longitude": -43.3448,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:12:12.502Z"
+    },
+    "local-51": {
+      "id": 51,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7303,
+      "longitude": -43.346,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:12:17.518Z"
+    },
+    "local-52": {
+      "id": 52,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7311,
+      "longitude": -43.3473,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:12:22.521Z"
+    },
+    "local-53": {
+      "id": 53,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7317,
+      "longitude": -43.3488,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:12:27.524Z"
+    },
+    "local-54": {
+      "id": 54,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7312,
+      "longitude": -43.3478,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:12:32.533Z"
+    },
+    "local-55": {
+      "id": 55,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7308,
+      "longitude": -43.3469,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:12:37.535Z"
+    },
+    "local-56": {
+      "id": 56,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7302,
+      "longitude": -43.3461,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:12:42.537Z"
+    },
+    "local-57": {
+      "id": 57,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7298,
+      "longitude": -43.3455,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:12:47.539Z"
+    },
+    "local-58": {
+      "id": 58,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7292,
+      "longitude": -43.3449,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:12:52.549Z"
+    },
+    "local-59": {
+      "id": 59,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7288,
+      "longitude": -43.3441,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:12:57.562Z"
+    },
+    "local-60": {
+      "id": 60,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7294,
+      "longitude": -43.3448,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:13:02.566Z"
+    },
+    "local-61": {
+      "id": 61,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7303,
+      "longitude": -43.346,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:13:07.576Z"
+    },
+    "local-62": {
+      "id": 62,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7311,
+      "longitude": -43.3473,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:13:12.586Z"
+    },
+    "local-63": {
+      "id": 63,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7317,
+      "longitude": -43.3488,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:13:17.596Z"
+    },
+    "local-64": {
+      "id": 64,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7312,
+      "longitude": -43.3478,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:13:22.606Z"
+    },
+    "local-65": {
+      "id": 65,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7308,
+      "longitude": -43.3469,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:13:27.608Z"
+    },
+    "local-66": {
+      "id": 66,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7302,
+      "longitude": -43.3461,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:13:32.608Z"
+    },
+    "local-67": {
+      "id": 67,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7298,
+      "longitude": -43.3455,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:13:37.611Z"
+    },
+    "local-68": {
+      "id": 68,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7292,
+      "longitude": -43.3449,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:13:42.618Z"
+    },
+    "local-69": {
+      "id": 69,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7288,
+      "longitude": -43.3441,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:13:47.628Z"
+    },
+    "local-70": {
+      "id": 70,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7294,
+      "longitude": -43.3448,
+      "status": "outside",
+      "recordedAt": "2026-05-14T22:13:52.639Z"
+    },
+    "local-71": {
+      "id": 71,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7303,
+      "longitude": -43.346,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:13:57.655Z"
+    },
+    "local-72": {
+      "id": 72,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "latitude": -21.7311,
+      "longitude": -43.3473,
+      "status": "inside",
+      "recordedAt": "2026-05-14T22:14:02.662Z"
+    }
+  },
+  "simulator": {
+    "mode": "running",
+    "currentIndex": 0,
+    "intervalMs": 5000,
+    "lastTickAt": "2026-05-14T22:14:02.669Z"
+  },
+  "alerts": {
+    "local-1": {
+      "id": 1,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "geofenceName": "Área de Trabalho 01",
+      "type": "geofence_exit",
+      "message": "Alerta AgriTrack: o trator Trator Massey 275 saiu da cerca virtual Área de Trabalho 01 às 14/05/2026, 19:08:37.",
+      "whatsappStatus": "simulado",
+      "createdAt": "2026-05-14T22:08:37.142Z"
+    },
+    "local-2": {
+      "id": 2,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "geofenceName": "Área de Trabalho 01",
+      "type": "geofence_exit",
+      "message": "Alerta AgriTrack: o trator Trator Massey 275 saiu da cerca virtual Área de Trabalho 01 às 14/05/2026, 19:09:27.",
+      "whatsappStatus": "simulado",
+      "createdAt": "2026-05-14T22:09:27.250Z"
+    },
+    "local-3": {
+      "id": 3,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "geofenceName": "Área de Trabalho 01",
+      "type": "geofence_exit",
+      "message": "Alerta AgriTrack: o trator Trator Massey 275 saiu da cerca virtual Área de Trabalho 01 às 14/05/2026, 19:10:17.",
+      "whatsappStatus": "simulado",
+      "createdAt": "2026-05-14T22:10:17.330Z"
+    },
+    "local-4": {
+      "id": 4,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "geofenceName": "Área de Trabalho 01",
+      "type": "geofence_exit",
+      "message": "Alerta AgriTrack: o trator Trator Massey 275 saiu da cerca virtual Área de Trabalho 01 às 14/05/2026, 19:11:07.",
+      "whatsappStatus": "simulado",
+      "createdAt": "2026-05-14T22:11:07.407Z"
+    },
+    "local-5": {
+      "id": 5,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "geofenceName": "Área de Trabalho 01",
+      "type": "geofence_exit",
+      "message": "Alerta AgriTrack: o trator Trator Massey 275 saiu da cerca virtual Área de Trabalho 01 às 14/05/2026, 19:11:57.",
+      "whatsappStatus": "simulado",
+      "createdAt": "2026-05-14T22:11:57.491Z"
+    },
+    "local-6": {
+      "id": 6,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "geofenceName": "Área de Trabalho 01",
+      "type": "geofence_exit",
+      "message": "Alerta AgriTrack: o trator Trator Massey 275 saiu da cerca virtual Área de Trabalho 01 às 14/05/2026, 19:12:47.",
+      "whatsappStatus": "simulado",
+      "createdAt": "2026-05-14T22:12:47.544Z"
+    },
+    "local-7": {
+      "id": 7,
+      "deviceId": 1,
+      "deviceName": "Trator Massey 275",
+      "geofenceName": "Área de Trabalho 01",
+      "type": "geofence_exit",
+      "message": "Alerta AgriTrack: o trator Trator Massey 275 saiu da cerca virtual Área de Trabalho 01 às 14/05/2026, 19:13:37.",
+      "whatsappStatus": "simulado",
+      "createdAt": "2026-05-14T22:13:37.619Z"
+    }
+  }
+}

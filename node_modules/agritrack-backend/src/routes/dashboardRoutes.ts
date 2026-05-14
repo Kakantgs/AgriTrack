@@ -26,7 +26,10 @@ dashboardRoutes.get("/", async (_request, response) => {
       statusSummary: {
         inside,
         outside
-      }
+      },
+      latestTelemetryAgeMinutes: lastPosition
+        ? Math.max(0, Math.round((Date.now() - new Date(lastPosition.recordedAt).getTime()) / 60000))
+        : null
     });
   } catch (error) {
     response.status(500).json({ message: error instanceof Error ? error.message : "Erro ao montar dashboard" });

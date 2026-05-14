@@ -5,6 +5,7 @@ import type { Property } from "../types";
 
 export function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     name: "Sítio Santa Luzia",
     location: "Juiz de Fora - MG",
@@ -27,9 +28,15 @@ export function PropertiesPage() {
       setFeedback("Informe nome, localização e área válida.");
       return;
     }
-    await api.createProperty(form);
+    if (editingId) {
+      await api.updateProperty(editingId, form);
+      setFeedback("Propriedade atualizada com sucesso.");
+    } else {
+      await api.createProperty(form);
+      setFeedback("Propriedade cadastrada com sucesso.");
+    }
     setForm({ name: "", location: "", areaHectares: 0 });
-    setFeedback("Propriedade cadastrada com sucesso.");
+    setEditingId(null);
     load();
   }
 
@@ -56,7 +63,24 @@ export function PropertiesPage() {
             value={form.areaHectares}
             onChange={(event) => setForm((current) => ({ ...current, areaHectares: Number(event.target.value) }))}
           />
-          <button className="rounded-2xl bg-brand-500 px-4 py-3 font-semibold text-white">Salvar propriedade</button>
+          <div className="flex flex-wrap gap-3">
+            <button className="rounded-2xl bg-brand-500 px-4 py-3 font-semibold text-white">
+              {editingId ? "Atualizar propriedade" : "Salvar propriedade"}
+            </button>
+            {editingId ? (
+              <button
+                type="button"
+                className="rounded-2xl border border-slate-200 px-4 py-3 font-semibold text-slate-700"
+                onClick={() => {
+                  setEditingId(null);
+                  setForm({ name: "", location: "", areaHectares: 0 });
+                  setFeedback("");
+                }}
+              >
+                Cancelar edição
+              </button>
+            ) : null}
+          </div>
           {feedback ? <p className="text-sm text-slate-500">{feedback}</p> : null}
         </form>
       </Card>
@@ -72,6 +96,36 @@ export function PropertiesPage() {
               <p className="font-semibold text-slate-850">{property.name}</p>
               <p className="text-sm text-slate-500">{property.location}</p>
               <p className="mt-2 text-sm text-slate-600">{property.areaHectares} hectares</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  className="rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700"
+                  onClick={() => {
+                    setEditingId(property.id);
+                    setForm({
+                      name: property.name,
+                      location: property.location,
+                      areaHectares: property.areaHectares
+                    });
+                    setFeedback("Modo edição ativo.");
+                  }}
+                >
+                  Editar
+                </button>
+                <button
+                  className="rounded-full bg-rose-600 px-3 py-2 text-xs font-semibold text-white"
+                  onClick={async () => {
+                    await api.deleteProperty(property.id);
+                    if (editingId === property.id) {
+                      setEditingId(null);
+                      setForm({ name: "", location: "", areaHectares: 0 });
+                    }
+                    setFeedback("Propriedade excluída.");
+                    load();
+                  }}
+                >
+                  Excluir
+                </button>
+              </div>
             </div>
           ))}
         </div>

@@ -1,5 +1,6 @@
 import { WebSocketServer } from "ws";
 import { getGeofenceByDevice } from "./geofenceService.js";
+import { getSimulatorState } from "./simulatorService.js";
 import { listCollection } from "./repository.js";
 export function createRealtimeServer(server) {
     const wss = new WebSocketServer({ server });
@@ -17,7 +18,8 @@ export function createRealtimeServer(server) {
             device,
             geofence: await getGeofenceByDevice(device.id),
             latestPosition,
-            latestAlert
+            latestAlert,
+            simulator: await getSimulatorState()
         };
     }
     async function broadcast() {

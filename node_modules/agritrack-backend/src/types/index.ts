@@ -1,6 +1,7 @@
 export type DeviceStatus = "active" | "inactive";
 export type GeofenceStatus = "inside" | "outside";
 export type WhatsappStatus = "simulado" | "enviado" | "erro";
+export type SimulatorMode = "running" | "paused";
 
 export type Property = {
   id: number;
@@ -51,4 +52,20 @@ export type Alert = {
   message: string;
   whatsappStatus: WhatsappStatus;
   createdAt: string;
+};
+
+export type SimulatorState = {
+  mode: SimulatorMode;
+  currentIndex: number;
+  intervalMs: number;
+  lastTickAt: string | null;
+};
+
+export type TelemetryPayload = {
+  deviceCode: string;
+  latitude: number;
+  longitude: number;
+  timestamp?: string;
+  battery?: number;
+  speed?: number;
 };

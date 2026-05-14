@@ -9,6 +9,7 @@ export function DevicesPage() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [feedback, setFeedback] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<{
     name: string;
     plate: string;
@@ -46,9 +47,15 @@ export function DevicesPage() {
       setFeedback("Preencha nome, identificação e código do dispositivo.");
       return;
     }
-    await api.createDevice(form);
+    if (editingId) {
+      await api.updateDevice(editingId, form);
+      setFeedback("Trator atualizado com sucesso.");
+    } else {
+      await api.createDevice(form);
+      setFeedback("Trator cadastrado com sucesso.");
+    }
     setForm({ name: "", plate: "", deviceCode: "", status: "active", propertyId: properties[0]?.id ?? 1 });
-    setFeedback("Trator cadastrado com sucesso.");
+    setEditingId(null);
     load();
   }
 
@@ -93,7 +100,24 @@ export function DevicesPage() {
             <option value="active">Ativo</option>
             <option value="inactive">Inativo</option>
           </select>
-          <button className="rounded-2xl bg-brand-500 px-4 py-3 font-semibold text-white">Salvar trator</button>
+          <div className="flex flex-wrap gap-3">
+            <button className="rounded-2xl bg-brand-500 px-4 py-3 font-semibold text-white">
+              {editingId ? "Atualizar trator" : "Salvar trator"}
+            </button>
+            {editingId ? (
+              <button
+                type="button"
+                className="rounded-2xl border border-slate-200 px-4 py-3 font-semibold text-slate-700"
+                onClick={() => {
+                  setEditingId(null);
+                  setForm({ name: "", plate: "", deviceCode: "", status: "active", propertyId: properties[0]?.id ?? 1 });
+                  setFeedback("");
+                }}
+              >
+                Cancelar edição
+              </button>
+            ) : null}
+          </div>
           {feedback ? <p className="text-sm text-slate-500">{feedback}</p> : null}
         </form>
       </Card>
@@ -123,6 +147,37 @@ export function DevicesPage() {
                   <StatusBadge value={device.status} />
                   <StatusBadge value={device.geofenceStatus} />
                 </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  className="rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700"
+                  onClick={() => {
+                    setEditingId(device.id);
+                    setForm({
+                      name: device.name,
+                      plate: device.plate,
+                      deviceCode: device.deviceCode,
+                      status: device.status,
+                      propertyId: device.propertyId
+                    });
+                    setFeedback("Modo edição ativo.");
+                  }}
+                >
+                  Editar
+                </button>
+                <button
+                  className="rounded-full bg-rose-600 px-3 py-2 text-xs font-semibold text-white"
+                  onClick={async () => {
+                    await api.deleteDevice(device.id);
+                    if (editingId === device.id) {
+                      setEditingId(null);
+                    }
+                    setFeedback("Trator excluído.");
+                    load();
+                  }}
+                >
+                  Excluir
+                </button>
               </div>
             </div>
           ))}

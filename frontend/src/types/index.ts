@@ -62,10 +62,27 @@ export type DashboardData = {
   onlineDevices: number;
   lastPosition: Position | null;
   latestAlert: Alert | null;
+  latestTelemetryAgeMinutes: number | null;
   statusSummary: {
     inside: number;
     outside: number;
   };
+};
+
+export type SimulatorState = {
+  mode: "running" | "paused";
+  currentIndex: number;
+  intervalMs: number;
+  lastTickAt: string | null;
+};
+
+export type TelemetryPayload = {
+  deviceCode: string;
+  latitude: number;
+  longitude: number;
+  timestamp?: string;
+  battery?: number;
+  speed?: number;
 };
 
 export type RealtimePayload = {
@@ -73,4 +90,5 @@ export type RealtimePayload = {
   geofence: Geofence | null;
   latestPosition: Position;
   latestAlert: Alert | null;
+  simulator: SimulatorState;
 };
