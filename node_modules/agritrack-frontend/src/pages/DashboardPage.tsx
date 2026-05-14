@@ -1,3 +1,4 @@
+import { Activity, AlertTriangle, MapPin, Radio } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AlertBanner } from "../components/AlertBanner";
 import { Card } from "../components/Card";
@@ -8,7 +9,7 @@ import type { DashboardData } from "../types";
 
 export function DashboardPage() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
-  const { snapshot, latestAlert } = useRealtime();
+  const { snapshot, latestAlert, connectionState, lastMessageAt } = useRealtime();
 
   useEffect(() => {
     api.getDashboard().then(setDashboard);
@@ -18,21 +19,67 @@ export function DashboardPage() {
     <div className="space-y-6">
       <AlertBanner alert={latestAlert} />
 
+      <Card className="overflow-hidden bg-[linear-gradient(135deg,#173928_0%,#22563b_48%,#2d8a4d_100%)] text-white">
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-emerald-100">Operação ao vivo</p>
+            <h1 className="mt-3 text-3xl font-bold leading-tight sm:text-4xl">Monitoramento de tratores para apresentação em campo e em estande.</h1>
+            <p className="mt-3 max-w-2xl text-sm text-emerald-50">
+              O painel acompanha telemetria, cerca virtual e geração de alertas em tempo real tanto no desktop quanto no celular.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="rounded-3xl bg-white/10 p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-emerald-50">Conectividade</span>
+                <Radio size={18} />
+              </div>
+              <p className="mt-3 text-xl font-semibold">
+                {connectionState === "live" ? "Tempo real ativo" : connectionState === "connecting" ? "Conectando" : "Offline"}
+              </p>
+              <p className="mt-1 text-xs text-emerald-100">
+                Última atualização {lastMessageAt ? new Date(lastMessageAt).toLocaleTimeString("pt-BR") : "pendente"}
+              </p>
+            </div>
+            <div className="rounded-3xl bg-white/10 p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-emerald-50">Estado da operação</span>
+                <AlertTriangle size={18} />
+              </div>
+              <p className="mt-3 text-xl font-semibold">{latestAlert ? "Atenção necessária" : "Sem eventos críticos"}</p>
+              <p className="mt-1 text-xs text-emerald-100">{latestAlert ? "Saída de cerca detectada recentemente" : "Equipamento estável na área permitida"}</p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card>
-          <p className="text-sm text-slate-500">Tratores cadastrados</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-500">Tratores cadastrados</p>
+            <Activity size={18} className="text-brand-600" />
+          </div>
           <p className="mt-2 text-3xl font-bold text-slate-850">{dashboard?.totalDevices ?? 0}</p>
         </Card>
         <Card>
-          <p className="text-sm text-slate-500">Tratores online</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-500">Tratores online</p>
+            <Radio size={18} className="text-brand-600" />
+          </div>
           <p className="mt-2 text-3xl font-bold text-slate-850">{dashboard?.onlineDevices ?? 0}</p>
         </Card>
         <Card>
-          <p className="text-sm text-slate-500">Dentro da cerca</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-500">Dentro da cerca</p>
+            <MapPin size={18} className="text-emerald-600" />
+          </div>
           <p className="mt-2 text-3xl font-bold text-emerald-700">{dashboard?.statusSummary.inside ?? 0}</p>
         </Card>
         <Card>
-          <p className="text-sm text-slate-500">Fora da cerca</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-500">Fora da cerca</p>
+            <AlertTriangle size={18} className="text-rose-600" />
+          </div>
           <p className="mt-2 text-3xl font-bold text-rose-700">{dashboard?.statusSummary.outside ?? 0}</p>
         </Card>
       </section>
@@ -68,17 +115,23 @@ export function DashboardPage() {
                 <span className="text-sm text-slate-500">Trator</span>
                 <span className="font-semibold text-slate-850">{snapshot.device.name}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <span className="text-sm text-slate-500">Propriedade</span>
-                <span className="font-semibold text-slate-850">{snapshot.device.propertyName}</span>
+                <span className="text-right font-semibold text-slate-850">{snapshot.device.propertyName}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <span className="text-sm text-slate-500">Cerca</span>
-                <span className="font-semibold text-slate-850">{snapshot.geofence?.name ?? "Sem cerca"}</span>
+                <span className="text-right font-semibold text-slate-850">{snapshot.geofence?.name ?? "Sem cerca"}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-500">Posição</span>
                 <StatusBadge value={snapshot.device.geofenceStatus} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-500">Atualização</span>
+                <span className="text-right text-sm font-medium text-slate-700">
+                  {new Date(snapshot.latestPosition.recordedAt).toLocaleTimeString("pt-BR")}
+                </span>
               </div>
             </div>
           ) : (

@@ -10,6 +10,7 @@ export function PropertiesPage() {
     location: "Juiz de Fora - MG",
     areaHectares: 124
   });
+  const [feedback, setFeedback] = useState("");
 
   async function load() {
     const data = await api.getProperties();
@@ -22,8 +23,13 @@ export function PropertiesPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (!form.name || !form.location || form.areaHectares <= 0) {
+      setFeedback("Informe nome, localização e área válida.");
+      return;
+    }
     await api.createProperty(form);
     setForm({ name: "", location: "", areaHectares: 0 });
+    setFeedback("Propriedade cadastrada com sucesso.");
     load();
   }
 
@@ -51,10 +57,15 @@ export function PropertiesPage() {
             onChange={(event) => setForm((current) => ({ ...current, areaHectares: Number(event.target.value) }))}
           />
           <button className="rounded-2xl bg-brand-500 px-4 py-3 font-semibold text-white">Salvar propriedade</button>
+          {feedback ? <p className="text-sm text-slate-500">{feedback}</p> : null}
         </form>
       </Card>
 
       <Card title="Propriedades cadastradas">
+        <div className="mb-4 rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm text-slate-500">Total de propriedades</p>
+          <p className="mt-2 text-2xl font-bold text-slate-850">{properties.length}</p>
+        </div>
         <div className="space-y-4">
           {properties.map((property) => (
             <div key={property.id} className="rounded-2xl border border-slate-200 p-4">

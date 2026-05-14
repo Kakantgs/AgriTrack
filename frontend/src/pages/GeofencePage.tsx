@@ -13,6 +13,7 @@ export function GeofencePage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [coordinates, setCoordinates] = useState<[number, number][]>([]);
+  const [feedback, setFeedback] = useState("");
   const [form, setForm] = useState({
     name: "Área de Trabalho 01",
     propertyId: 1,
@@ -39,10 +40,12 @@ export function GeofencePage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (coordinates.length < 3) {
+      setFeedback("A cerca precisa de pelo menos 3 pontos.");
       return;
     }
     await api.createGeofence({ ...form, coordinates });
     setCoordinates([]);
+    setFeedback("Cerca virtual salva com sucesso.");
     load();
   }
 
@@ -81,6 +84,9 @@ export function GeofencePage() {
           <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
             Clique no mapa para adicionar pontos da área permitida. São necessários pelo menos 3 pontos.
           </div>
+          <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-600">
+            Pontos selecionados: <strong>{coordinates.length}</strong>
+          </div>
           <div className="flex gap-3">
             <button type="submit" className="rounded-2xl bg-brand-500 px-4 py-3 font-semibold text-white">
               Salvar cerca
@@ -93,6 +99,7 @@ export function GeofencePage() {
               Limpar pontos
             </button>
           </div>
+          {feedback ? <p className="text-sm text-slate-500">{feedback}</p> : null}
         </form>
 
         <div className="mt-6 space-y-3">
@@ -105,7 +112,7 @@ export function GeofencePage() {
         </div>
       </Card>
 
-      <Card className="h-[620px] overflow-hidden p-0">
+      <Card className="h-[420px] overflow-hidden p-0 sm:h-[520px] xl:h-[620px]">
         <MapContainer center={center} zoom={16} scrollWheelZoom className="h-full w-full">
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

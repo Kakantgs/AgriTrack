@@ -1,12 +1,14 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Card } from "../components/Card";
 import { StatusBadge } from "../components/StatusBadge";
+import { useRealtime } from "../hooks/useRealtime";
 import { api } from "../services/api";
 import type { Device, Property } from "../types";
 
 export function DevicesPage() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [feedback, setFeedback] = useState("");
   const [form, setForm] = useState<{
     name: string;
     plate: string;
@@ -20,6 +22,7 @@ export function DevicesPage() {
     status: "active" as const,
     propertyId: 1
   });
+  const { snapshot } = useRealtime();
 
   async function load() {
     const [deviceData, propertyData] = await Promise.all([api.getDevices(), api.getProperties()]);
@@ -31,10 +34,21 @@ export function DevicesPage() {
     load();
   }, []);
 
+  useEffect(() => {
+    if (snapshot?.latestPosition.id) {
+      load();
+    }
+  }, [snapshot?.latestPosition.id]);
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (!form.name || !form.plate || !form.deviceCode) {
+      setFeedback("Preencha nome, identificação e código do dispositivo.");
+      return;
+    }
     await api.createDevice(form);
     setForm({ name: "", plate: "", deviceCode: "", status: "active", propertyId: properties[0]?.id ?? 1 });
+    setFeedback("Trator cadastrado com sucesso.");
     load();
   }
 
@@ -80,20 +94,32 @@ export function DevicesPage() {
             <option value="inactive">Inativo</option>
           </select>
           <button className="rounded-2xl bg-brand-500 px-4 py-3 font-semibold text-white">Salvar trator</button>
+          {feedback ? <p className="text-sm text-slate-500">{feedback}</p> : null}
         </form>
       </Card>
 
       <Card title="Tratores cadastrados">
+        <div className="mb-4 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Total de tratores</p>
+            <p className="mt-2 text-2xl font-bold text-slate-850">{devices.length}</p>
+          </div>
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Ativos</p>
+            <p className="mt-2 text-2xl font-bold text-emerald-700">{devices.filter((item) => item.status === "active").length}</p>
+          </div>
+        </div>
         <div className="space-y-4">
           {devices.map((device) => (
             <div key={device.id} className="rounded-2xl border border-slate-200 p-4">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="font-semibold text-slate-850">{device.name}</p>
                   <p className="text-sm text-slate-500">{device.plate}</p>
                   <p className="mt-1 text-sm text-slate-500">Dispositivo: {device.deviceCode}</p>
+                  <p className="mt-1 text-sm text-slate-500">Propriedade: {device.propertyName}</p>
                 </div>
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-wrap gap-2 sm:flex-col sm:items-end">
                   <StatusBadge value={device.status} />
                   <StatusBadge value={device.geofenceStatus} />
                 </div>

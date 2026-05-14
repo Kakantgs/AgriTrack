@@ -14,8 +14,27 @@ export function AlertsPage() {
   }, [latestAlert?.id]);
 
   return (
-    <Card title="Alertas gerados">
-      <div className="space-y-4">
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <p className="text-sm text-slate-500">Total de eventos</p>
+          <p className="mt-2 text-3xl font-bold text-slate-850">{alerts.length}</p>
+        </Card>
+        <Card>
+          <p className="text-sm text-slate-500">WhatsApp simulado</p>
+          <p className="mt-2 text-3xl font-bold text-amber-600">{alerts.filter((item) => item.whatsappStatus === "simulado").length}</p>
+        </Card>
+        <Card>
+          <p className="text-sm text-slate-500">Último alerta</p>
+          <p className="mt-2 text-base font-semibold text-slate-850">
+            {alerts[0] ? new Date(alerts[0].createdAt).toLocaleString("pt-BR") : "Sem eventos"}
+          </p>
+        </Card>
+      </div>
+
+      <Card title="Alertas gerados">
+        <div className="space-y-4">
+          {alerts.length === 0 ? <p className="text-sm text-slate-500">Nenhum alerta registrado até o momento.</p> : null}
         {alerts.map((alert) => (
           <div key={alert.id} className="rounded-2xl border border-slate-200 p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -31,7 +50,8 @@ export function AlertsPage() {
             </div>
           </div>
         ))}
-      </div>
-    </Card>
+        </div>
+      </Card>
+    </div>
   );
 }
