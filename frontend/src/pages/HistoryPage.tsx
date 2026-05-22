@@ -29,9 +29,30 @@ export function HistoryPage() {
     load();
   }, [snapshot?.latestPosition.id]);
 
+  function exportCsv() {
+    const headers = ["Trator", "Data/Hora", "Latitude", "Longitude", "Status"];
+    const rows = history.map((item) => [
+      item.deviceName,
+      new Date(item.recordedAt).toLocaleString("pt-BR"),
+      item.latitude.toFixed(6),
+      item.longitude.toFixed(6),
+      item.status === "inside" ? "Dentro da cerca" : "Fora da cerca"
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(";"))
+      .join("\n");
+    const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `historico-agritrack-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <Card title="Histórico de posições">
-      <div className="mb-6 grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+      <div className="mb-6 grid gap-4 md:grid-cols-[1fr_1fr_auto_auto]">
         <select
           className="rounded-2xl border border-slate-200 px-4 py-3"
           value={deviceId}
@@ -53,6 +74,17 @@ export function HistoryPage() {
         <button className="rounded-2xl bg-brand-500 px-5 py-3 font-semibold text-white" onClick={load}>
           Filtrar
         </button>
+        <button
+          className="rounded-2xl border border-slate-200 px-5 py-3 font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+          onClick={exportCsv}
+          disabled={history.length === 0}
+        >
+          Exportar CSV
+        </button>
+      </div>
+
+      <div className="mb-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        {history.length} registro(s) encontrado(s). A exportação respeita os filtros selecionados.
       </div>
 
       <div className="space-y-3 md:hidden">

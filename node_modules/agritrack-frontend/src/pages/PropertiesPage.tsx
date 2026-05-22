@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Card } from "../components/Card";
 import { api } from "../services/api";
 import type { Property } from "../types";
+import { getErrorMessage } from "../utils/errors";
 
 export function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -28,16 +29,20 @@ export function PropertiesPage() {
       setFeedback("Informe nome, localização e área válida.");
       return;
     }
-    if (editingId) {
-      await api.updateProperty(editingId, form);
-      setFeedback("Propriedade atualizada com sucesso.");
-    } else {
-      await api.createProperty(form);
-      setFeedback("Propriedade cadastrada com sucesso.");
+    try {
+      if (editingId) {
+        await api.updateProperty(editingId, form);
+        setFeedback("Propriedade atualizada com sucesso.");
+      } else {
+        await api.createProperty(form);
+        setFeedback("Propriedade cadastrada com sucesso.");
+      }
+      setForm({ name: "", location: "", areaHectares: 0 });
+      setEditingId(null);
+      await load();
+    } catch (error) {
+      setFeedback(getErrorMessage(error, "Não foi possível salvar a propriedade."));
     }
-    setForm({ name: "", location: "", areaHectares: 0 });
-    setEditingId(null);
-    load();
   }
 
   return (
@@ -114,13 +119,17 @@ export function PropertiesPage() {
                 <button
                   className="rounded-full bg-rose-600 px-3 py-2 text-xs font-semibold text-white"
                   onClick={async () => {
-                    await api.deleteProperty(property.id);
-                    if (editingId === property.id) {
-                      setEditingId(null);
-                      setForm({ name: "", location: "", areaHectares: 0 });
+                    try {
+                      await api.deleteProperty(property.id);
+                      if (editingId === property.id) {
+                        setEditingId(null);
+                        setForm({ name: "", location: "", areaHectares: 0 });
+                      }
+                      setFeedback("Propriedade excluída.");
+                      await load();
+                    } catch (error) {
+                      setFeedback(getErrorMessage(error, "Não foi possível excluir a propriedade."));
                     }
-                    setFeedback("Propriedade excluída.");
-                    load();
                   }}
                 >
                   Excluir

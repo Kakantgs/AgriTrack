@@ -8,6 +8,8 @@ import { HistoryPage } from "./pages/HistoryPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MapPage } from "./pages/MapPage";
 import { PropertiesPage } from "./pages/PropertiesPage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { UsersPage } from "./pages/UsersPage";
 
 function ProtectedRoute() {
   const token = localStorage.getItem("agritrack-token");
@@ -26,6 +28,8 @@ export default function App() {
         <Route path="/cercas" element={<GeofencePage />} />
         <Route path="/historico" element={<HistoryPage />} />
         <Route path="/alertas" element={<AlertsPage />} />
+        <Route path="/usuarios" element={<UsersPage />} />
+        <Route path="/configuracoes" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

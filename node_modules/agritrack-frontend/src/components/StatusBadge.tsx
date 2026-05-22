@@ -1,5 +1,5 @@
 type StatusBadgeProps = {
-  value: "inside" | "outside" | "active" | "inactive" | "simulado" | "enviado" | "erro";
+  value: "inside" | "outside" | "active" | "inactive" | "pendente" | "enviado" | "erro";
 };
 
 const styles: Record<StatusBadgeProps["value"], string> = {
@@ -7,7 +7,7 @@ const styles: Record<StatusBadgeProps["value"], string> = {
   outside: "bg-rose-100 text-rose-700",
   active: "bg-emerald-100 text-emerald-700",
   inactive: "bg-slate-200 text-slate-600",
-  simulado: "bg-amber-100 text-amber-700",
+  pendente: "bg-amber-100 text-amber-700",
   enviado: "bg-emerald-100 text-emerald-700",
   erro: "bg-rose-100 text-rose-700"
 };
@@ -17,7 +17,7 @@ const labels: Record<StatusBadgeProps["value"], string> = {
   outside: "Fora da cerca",
   active: "Ativo",
   inactive: "Inativo",
-  simulado: "Simulado",
+  pendente: "Pendente",
   enviado: "Enviado",
   erro: "Erro"
 };

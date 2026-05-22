@@ -2,24 +2,33 @@ import { Activity, AlertTriangle, MapPin, Radio } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AlertBanner } from "../components/AlertBanner";
 import { Card } from "../components/Card";
-import { SimulatorControlPanel } from "../components/SimulatorControlPanel";
 import { StatusBadge } from "../components/StatusBadge";
 import { useRealtime } from "../hooks/useRealtime";
 import { api } from "../services/api";
-import type { DashboardData } from "../types";
+import type { DashboardData, Device, Property } from "../types";
 
 export function DashboardPage() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [filters, setFilters] = useState({ propertyId: "", deviceId: "", date: "" });
   const { snapshot, latestAlert, connectionState, lastMessageAt } = useRealtime();
 
   async function refreshDashboard() {
-    const data = await api.getDashboard();
+    const data = await api.getDashboard(filters);
     setDashboard(data);
   }
 
   useEffect(() => {
+    Promise.all([api.getProperties(), api.getDevices()]).then(([propertyData, deviceData]) => {
+      setProperties(propertyData);
+      setDevices(deviceData);
+    });
+  }, []);
+
+  useEffect(() => {
     refreshDashboard();
-  }, [snapshot?.latestPosition.id]);
+  }, [snapshot?.latestPosition.id, filters.propertyId, filters.deviceId, filters.date]);
 
   return (
     <div className="space-y-6">
@@ -29,9 +38,9 @@ export function DashboardPage() {
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-emerald-100">Operação ao vivo</p>
-            <h1 className="mt-3 text-3xl font-bold leading-tight sm:text-4xl">Monitoramento de tratores para apresentação em campo e em estande.</h1>
+            <h1 className="mt-3 text-3xl font-bold leading-tight sm:text-4xl">Monitoramento operacional de tratores em tempo real.</h1>
             <p className="mt-3 max-w-2xl text-sm text-emerald-50">
-              O painel acompanha telemetria, cerca virtual e geração de alertas em tempo real tanto no desktop quanto no celular.
+              O painel acompanha telemetria enviada pelos dispositivos, cerca virtual e geração de alertas em tempo real.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
@@ -56,6 +65,49 @@ export function DashboardPage() {
               <p className="mt-1 text-xs text-emerald-100">{latestAlert ? "Saída de cerca detectada recentemente" : "Equipamento estável na área permitida"}</p>
             </div>
           </div>
+        </div>
+      </Card>
+
+      <Card title="Filtros operacionais">
+        <div className="grid gap-4 md:grid-cols-4">
+          <select
+            className="rounded-2xl border border-slate-200 px-4 py-3"
+            value={filters.propertyId}
+            onChange={(event) => setFilters((current) => ({ ...current, propertyId: event.target.value, deviceId: "" }))}
+          >
+            <option value="">Todas as propriedades</option>
+            {properties.map((property) => (
+              <option key={property.id} value={property.id}>
+                {property.name}
+              </option>
+            ))}
+          </select>
+          <select
+            className="rounded-2xl border border-slate-200 px-4 py-3"
+            value={filters.deviceId}
+            onChange={(event) => setFilters((current) => ({ ...current, deviceId: event.target.value }))}
+          >
+            <option value="">Todos os tratores</option>
+            {devices
+              .filter((device) => (filters.propertyId ? device.propertyId === Number(filters.propertyId) : true))
+              .map((device) => (
+                <option key={device.id} value={device.id}>
+                  {device.name}
+                </option>
+              ))}
+          </select>
+          <input
+            type="date"
+            className="rounded-2xl border border-slate-200 px-4 py-3"
+            value={filters.date}
+            onChange={(event) => setFilters((current) => ({ ...current, date: event.target.value }))}
+          />
+          <button
+            className="rounded-2xl border border-slate-200 px-4 py-3 font-semibold text-slate-700"
+            onClick={() => setFilters({ propertyId: "", deviceId: "", date: "" })}
+          >
+            Limpar filtros
+          </button>
         </div>
       </Card>
 
@@ -147,7 +199,31 @@ export function DashboardPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <SimulatorControlPanel snapshot={snapshot} onRefresh={refreshDashboard} />
+        <Card title="Integração de telemetria">
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600">
+              Envie posições reais do rastreador, ESP32, gateway, Traccar ou outro serviço para o endpoint abaixo.
+            </p>
+            <div className="rounded-2xl bg-slate-850 p-4 font-mono text-xs text-emerald-100">
+              POST http://localhost:4000/api/telemetry
+            </div>
+            <pre className="overflow-x-auto rounded-2xl bg-slate-50 p-4 text-xs text-slate-700">
+{`{
+  "deviceCode": "${snapshot?.device.deviceCode ?? "CODIGO_DO_DISPOSITIVO"}",
+  "deviceToken": "${snapshot?.device.deviceToken ?? "TOKEN_DO_DISPOSITIVO"}",
+  "latitude": -21.7317,
+  "longitude": -43.3488,
+  "timestamp": "${new Date().toISOString()}",
+  "speed": 12,
+  "battery": 87
+}`}
+            </pre>
+            <p className="text-sm text-slate-600">
+              O `deviceCode` e o `deviceToken` precisam bater com o cadastro do trator. Cada posição recebida atualiza mapa,
+              histórico, status da cerca e alertas.
+            </p>
+          </div>
+        </Card>
         <Card title="Qualidade da telemetria">
           <div className="space-y-4">
             <div className="rounded-2xl bg-slate-50 p-4">
@@ -158,12 +234,10 @@ export function DashboardPage() {
             </div>
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Origem operacional</p>
-              <p className="mt-2 text-base font-semibold text-slate-850">
-                {snapshot?.simulator.mode === "running" ? "Simulador automático ativo" : "Pronto para telemetria manual"}
-              </p>
+              <p className="mt-2 text-base font-semibold text-slate-850">Telemetria real via API</p>
             </div>
             <p className="text-sm text-slate-600">
-              O mesmo fluxo de backend agora aceita telemetria do simulador e também posições reais via `POST /api/telemetry`.
+              Se a idade da última posição crescer, verifique energia, sinal, internet do equipamento ou integração do gateway.
             </p>
           </div>
         </Card>

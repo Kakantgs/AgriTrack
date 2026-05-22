@@ -4,6 +4,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useRealtime } from "../hooks/useRealtime";
 import { api } from "../services/api";
 import type { Device, Property } from "../types";
+import { getErrorMessage } from "../utils/errors";
 
 export function DevicesPage() {
   const [devices, setDevices] = useState<Device[]>([]);
@@ -47,16 +48,24 @@ export function DevicesPage() {
       setFeedback("Preencha nome, identificação e código do dispositivo.");
       return;
     }
-    if (editingId) {
-      await api.updateDevice(editingId, form);
-      setFeedback("Trator atualizado com sucesso.");
-    } else {
-      await api.createDevice(form);
-      setFeedback("Trator cadastrado com sucesso.");
+    if (properties.length === 0) {
+      setFeedback("Cadastre uma propriedade antes de cadastrar o trator.");
+      return;
     }
-    setForm({ name: "", plate: "", deviceCode: "", status: "active", propertyId: properties[0]?.id ?? 1 });
-    setEditingId(null);
-    load();
+    try {
+      if (editingId) {
+        await api.updateDevice(editingId, form);
+        setFeedback("Trator atualizado com sucesso.");
+      } else {
+        await api.createDevice(form);
+        setFeedback("Trator cadastrado com sucesso.");
+      }
+      setForm({ name: "", plate: "", deviceCode: "", status: "active", propertyId: properties[0]?.id ?? 1 });
+      setEditingId(null);
+      await load();
+    } catch (error) {
+      setFeedback(getErrorMessage(error, "Não foi possível salvar o trator."));
+    }
   }
 
   return (
@@ -141,7 +150,18 @@ export function DevicesPage() {
                   <p className="font-semibold text-slate-850">{device.name}</p>
                   <p className="text-sm text-slate-500">{device.plate}</p>
                   <p className="mt-1 text-sm text-slate-500">Dispositivo: {device.deviceCode}</p>
+                  {device.deviceToken ? (
+                    <p className="mt-1 break-all rounded-xl bg-slate-50 px-3 py-2 font-mono text-xs text-slate-600">
+                      Token: {device.deviceToken}
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-sm text-slate-500">Propriedade: {device.propertyName}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Última leitura: {device.lastUpdatedAt ? new Date(device.lastUpdatedAt).toLocaleString("pt-BR") : "sem telemetria"}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Velocidade: {device.lastSpeed ?? "-"} km/h · Bateria: {device.lastBattery ?? "-"}%
+                  </p>
                 </div>
                 <div className="flex flex-wrap gap-2 sm:flex-col sm:items-end">
                   <StatusBadge value={device.status} />
@@ -168,15 +188,33 @@ export function DevicesPage() {
                 <button
                   className="rounded-full bg-rose-600 px-3 py-2 text-xs font-semibold text-white"
                   onClick={async () => {
-                    await api.deleteDevice(device.id);
-                    if (editingId === device.id) {
-                      setEditingId(null);
+                    try {
+                      await api.deleteDevice(device.id);
+                      if (editingId === device.id) {
+                        setEditingId(null);
+                      }
+                      setFeedback("Trator excluído.");
+                      await load();
+                    } catch (error) {
+                      setFeedback(getErrorMessage(error, "Não foi possível excluir o trator."));
                     }
-                    setFeedback("Trator excluído.");
-                    load();
                   }}
                 >
                   Excluir
+                </button>
+                <button
+                  className="rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700"
+                  onClick={async () => {
+                    try {
+                      await api.rotateDeviceToken(device.id);
+                      setFeedback("Token do dispositivo atualizado.");
+                      await load();
+                    } catch (error) {
+                      setFeedback(getErrorMessage(error, "Não foi possível rotacionar o token."));
+                    }
+                  }}
+                >
+                  Rotacionar token
                 </button>
               </div>
             </div>

@@ -21,8 +21,10 @@ export function AlertsPage() {
           <p className="mt-2 text-3xl font-bold text-slate-850">{alerts.length}</p>
         </Card>
         <Card>
-          <p className="text-sm text-slate-500">WhatsApp simulado</p>
-          <p className="mt-2 text-3xl font-bold text-amber-600">{alerts.filter((item) => item.whatsappStatus === "simulado").length}</p>
+          <p className="text-sm text-slate-500">WhatsApp pendente/webhook</p>
+          <p className="mt-2 text-3xl font-bold text-amber-600">
+            {alerts.filter((item) => item.whatsappStatus === "pendente").length}
+          </p>
         </Card>
         <Card>
           <p className="text-sm text-slate-500">Último alerta</p>

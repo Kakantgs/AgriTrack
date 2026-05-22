@@ -1,5 +1,8 @@
 import { Router } from "express";
+import { validateBody } from "../middleware/validate.js";
+import { auditLog } from "../services/auditService.js";
 import { deleteWhereId, insertWithIncrement, listCollection, patchWhereId } from "../services/repository.js";
+import { geofenceSchema } from "../validation/schemas.js";
 export const geofenceRoutes = Router();
 geofenceRoutes.get("/", async (_request, response) => {
     try {
@@ -10,17 +13,18 @@ geofenceRoutes.get("/", async (_request, response) => {
         response.status(500).json({ message: error instanceof Error ? error.message : "Erro ao listar cercas" });
     }
 });
-geofenceRoutes.post("/", async (request, response) => {
+geofenceRoutes.post("/", validateBody(geofenceSchema), async (request, response) => {
     try {
         const { name, propertyId, deviceId, coordinates } = request.body;
         const geofence = await insertWithIncrement("geofences", { name, propertyId, deviceId, coordinates });
+        auditLog({ action: "geofences.create", actor: request.user, target: `geofences/${geofence.id}` });
         response.status(201).json(geofence);
     }
     catch (error) {
         response.status(500).json({ message: error instanceof Error ? error.message : "Erro ao criar cerca" });
     }
 });
-geofenceRoutes.put("/:id", async (request, response) => {
+geofenceRoutes.put("/:id", validateBody(geofenceSchema), async (request, response) => {
     try {
         const id = Number(request.params.id);
         const { name, propertyId, deviceId, coordinates } = request.body;
@@ -29,6 +33,7 @@ geofenceRoutes.put("/:id", async (request, response) => {
             response.status(404).json({ message: "Cerca não encontrada" });
             return;
         }
+        auditLog({ action: "geofences.update", actor: request.user, target: `geofences/${geofence.id}` });
         response.json(geofence);
     }
     catch (error) {
@@ -42,6 +47,7 @@ geofenceRoutes.delete("/:id", async (request, response) => {
             response.status(404).json({ message: "Cerca não encontrada" });
             return;
         }
+        auditLog({ action: "geofences.delete", actor: request.user, target: `geofences/${request.params.id}` });
         response.status(204).send();
     }
     catch (error) {

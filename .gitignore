@@ -1,0 +1,9 @@
+node_modules/
+.vite/
+
+# Local Firebase credentials
+firebase.env
+**/firebase.env
+*.service-account.json
+service-account*.json
+backend/service-account.json

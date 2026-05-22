@@ -11,6 +11,10 @@ export async function processTelemetry(payload: TelemetryPayload) {
     throw new Error("Dispositivo não encontrado");
   }
 
+  if (!device.deviceToken || !payload.deviceToken || payload.deviceToken !== device.deviceToken) {
+    throw new Error("Token do dispositivo inválido");
+  }
+
   return persistPosition(device, payload.latitude, payload.longitude, payload.timestamp, payload.speed, payload.battery);
 }
 
@@ -19,8 +23,8 @@ export async function persistPosition(
   latitude: number,
   longitude: number,
   timestamp?: string,
-  _speed?: number,
-  _battery?: number
+  speed?: number,
+  battery?: number
 ) {
   const geofence = await getGeofenceByDevice(device.id);
   const status: GeofenceStatus =
@@ -31,6 +35,8 @@ export async function persistPosition(
     lastLatitude: latitude,
     lastLongitude: longitude,
     lastUpdatedAt: recordedAt,
+    lastSpeed: speed ?? null,
+    lastBattery: battery ?? null,
     geofenceStatus: status,
     online: true
   });
@@ -41,7 +47,9 @@ export async function persistPosition(
     latitude,
     longitude,
     status,
-    recordedAt
+    recordedAt,
+    speed: speed ?? null,
+    battery: battery ?? null
   });
 
   let latestAlert = null;

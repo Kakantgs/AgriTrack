@@ -7,9 +7,12 @@ export async function processTelemetry(payload) {
     if (!device) {
         throw new Error("Dispositivo não encontrado");
     }
+    if (!device.deviceToken || !payload.deviceToken || payload.deviceToken !== device.deviceToken) {
+        throw new Error("Token do dispositivo inválido");
+    }
     return persistPosition(device, payload.latitude, payload.longitude, payload.timestamp, payload.speed, payload.battery);
 }
-export async function persistPosition(device, latitude, longitude, timestamp, _speed, _battery) {
+export async function persistPosition(device, latitude, longitude, timestamp, speed, battery) {
     const geofence = await getGeofenceByDevice(device.id);
     const status = geofence && isPointInsidePolygon([latitude, longitude], geofence.coordinates) ? "inside" : "outside";
     const recordedAt = timestamp ?? new Date().toISOString();
@@ -17,6 +20,8 @@ export async function persistPosition(device, latitude, longitude, timestamp, _s
         lastLatitude: latitude,
         lastLongitude: longitude,
         lastUpdatedAt: recordedAt,
+        lastSpeed: speed ?? null,
+        lastBattery: battery ?? null,
         geofenceStatus: status,
         online: true
     });
@@ -26,7 +31,9 @@ export async function persistPosition(device, latitude, longitude, timestamp, _s
         latitude,
         longitude,
         status,
-        recordedAt
+        recordedAt,
+        speed: speed ?? null,
+        battery: battery ?? null
     });
     let latestAlert = null;
     if (device.geofenceStatus === "inside" && status === "outside" && geofence) {

@@ -1,9 +1,17 @@
 import { WebSocketServer } from "ws";
 import { getGeofenceByDevice } from "./geofenceService.js";
-import { getSimulatorState } from "./simulatorService.js";
+import { verifyAuthToken } from "./authService.js";
+import { withComputedOnlineStatus } from "./deviceStatus.js";
 import { listCollection } from "./repository.js";
 export function createRealtimeServer(server) {
     const wss = new WebSocketServer({ server });
+    wss.on("connection", (socket, request) => {
+        const url = new URL(request.url ?? "/", "http://localhost");
+        const token = url.searchParams.get("token");
+        if (!token || !verifyAuthToken(token)) {
+            socket.close(1008, "Autenticação obrigatória");
+        }
+    });
     async function snapshot() {
         const devices = await listCollection("devices");
         const positions = await listCollection("positions");
@@ -15,11 +23,10 @@ export function createRealtimeServer(server) {
             return null;
         }
         return {
-            device,
+            device: withComputedOnlineStatus(device),
             geofence: await getGeofenceByDevice(device.id),
             latestPosition,
-            latestAlert,
-            simulator: await getSimulatorState()
+            latestAlert
         };
     }
     async function broadcast() {

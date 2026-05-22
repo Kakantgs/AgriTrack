@@ -1,5 +1,8 @@
 import { Router } from "express";
+import { validateBody } from "../middleware/validate.js";
+import { auditLog } from "../services/auditService.js";
 import { deleteWhereId, insertWithIncrement, listCollection, patchWhereId } from "../services/repository.js";
+import { propertySchema } from "../validation/schemas.js";
 export const propertyRoutes = Router();
 propertyRoutes.get("/", async (_request, response) => {
     try {
@@ -10,17 +13,18 @@ propertyRoutes.get("/", async (_request, response) => {
         response.status(500).json({ message: error instanceof Error ? error.message : "Erro ao listar propriedades" });
     }
 });
-propertyRoutes.post("/", async (request, response) => {
+propertyRoutes.post("/", validateBody(propertySchema), async (request, response) => {
     try {
         const { name, location, areaHectares } = request.body;
         const property = await insertWithIncrement("properties", { name, location, areaHectares });
+        auditLog({ action: "properties.create", actor: request.user, target: `properties/${property.id}` });
         response.status(201).json(property);
     }
     catch (error) {
         response.status(500).json({ message: error instanceof Error ? error.message : "Erro ao criar propriedade" });
     }
 });
-propertyRoutes.put("/:id", async (request, response) => {
+propertyRoutes.put("/:id", validateBody(propertySchema), async (request, response) => {
     try {
         const id = Number(request.params.id);
         const { name, location, areaHectares } = request.body;
@@ -29,6 +33,7 @@ propertyRoutes.put("/:id", async (request, response) => {
             response.status(404).json({ message: "Propriedade não encontrada" });
             return;
         }
+        auditLog({ action: "properties.update", actor: request.user, target: `properties/${property.id}` });
         response.json(property);
     }
     catch (error) {
@@ -42,6 +47,7 @@ propertyRoutes.delete("/:id", async (request, response) => {
             response.status(404).json({ message: "Propriedade não encontrada" });
             return;
         }
+        auditLog({ action: "properties.delete", actor: request.user, target: `properties/${request.params.id}` });
         response.status(204).send();
     }
     catch (error) {

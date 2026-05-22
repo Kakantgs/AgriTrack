@@ -7,37 +7,55 @@ import { dashboardRoutes } from "./routes/dashboardRoutes.js";
 import { deviceRoutes } from "./routes/deviceRoutes.js";
 import { geofenceRoutes } from "./routes/geofenceRoutes.js";
 import { historyRoutes } from "./routes/historyRoutes.js";
+import { plannedRouteRoutes } from "./routes/plannedRouteRoutes.js";
 import { propertyRoutes } from "./routes/propertyRoutes.js";
-import { createSimulatorRoutes } from "./routes/simulatorRoutes.js";
+import { settingsRoutes } from "./routes/settingsRoutes.js";
 import { createTelemetryRoutes } from "./routes/telemetryRoutes.js";
+import { userRoutes } from "./routes/userRoutes.js";
+import { requireAuth, requireRole } from "./middleware/authMiddleware.js";
 import { createRealtimeServer } from "./services/realtimeService.js";
-import { seedDatabase } from "./services/seedService.js";
-import { startSimulatorLoop } from "./services/simulatorService.js";
+import { getStorageStatus } from "./services/repository.js";
 
 async function bootstrap() {
-  await seedDatabase();
-
   const app = express();
   const server = http.createServer(app);
   const realtime = createRealtimeServer(server);
-  const simulator = await startSimulatorLoop(realtime.broadcast);
 
-  app.use(cors());
+  const allowedOrigins = (process.env.CORS_ORIGIN ?? "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  app.use(
+    cors({
+      origin(origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        callback(new Error("Origem não autorizada pelo CORS"));
+      }
+    })
+  );
   app.use(express.json());
 
   app.get("/api/health", (_request, response) => {
-    response.json({ status: "ok" });
+    response.json({ status: "ok", storage: getStorageStatus() });
   });
 
   app.use("/api/auth", authRoutes);
+  app.use("/api/telemetry", createTelemetryRoutes(realtime.broadcast));
+  app.use(requireAuth);
   app.use("/api/properties", propertyRoutes);
   app.use("/api/devices", deviceRoutes);
   app.use("/api/geofences", geofenceRoutes);
   app.use("/api/history", historyRoutes);
   app.use("/api/alerts", alertRoutes);
+  app.use("/api/users", requireRole("admin"), userRoutes);
+  app.use("/api/planned-routes", plannedRouteRoutes);
+  app.use("/api/settings", settingsRoutes);
   app.use("/api/dashboard", dashboardRoutes);
-  app.use("/api/telemetry", createTelemetryRoutes(realtime.broadcast));
-  app.use("/api/simulator", createSimulatorRoutes(realtime.broadcast, simulator.refreshLoop));
   app.get("/api/realtime", async (_request, response) => {
     response.json(await realtime.snapshot());
   });

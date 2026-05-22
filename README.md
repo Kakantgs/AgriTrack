@@ -1,22 +1,13 @@
 # AgriTrack
 
-Protótipo funcional de rastreamento agrícola para monitoramento de tratores em tempo real, com simulador GPS, cerca virtual, alertas visuais e WhatsApp simulado.
+Aplicação operacional de rastreamento agrícola para monitoramento de tratores em tempo real, com Firebase Realtime Database, telemetria real, cercas digitais, histórico e alertas.
 
 ## Stack
 
 - Frontend: React + TypeScript + Tailwind CSS + Leaflet
-- Backend: Node.js + Express + Firebase Realtime Database + WebSocket
-- Simulação: trajeto GPS automático no backend com validação de geofence
-
-## Estrutura
-
-```text
-AgriTrack/
-  frontend/
-  backend/
-  README.md
-  package.json
-```
+- Backend: Node.js + Express + Firebase Admin + WebSocket
+- Banco: Firebase Realtime Database
+- Entrada de posições: `POST /api/telemetry`
 
 ## Como rodar
 
@@ -24,6 +15,7 @@ AgriTrack/
 
 - Node.js 20+
 - npm 10+
+- `backend/service-account.json` com credencial Firebase Admin
 
 ### Instalação
 
@@ -40,45 +32,64 @@ npm run dev
 - Frontend: `http://localhost:5173`
 - Backend/API/WebSocket: `http://localhost:4000`
 
-### Login inicial
+O frontend usa `frontend/.env` quando existir:
 
-- Usuário: `admin@agritrack.com`
-- Senha: `123456`
-
-## Funcionalidades entregues
-
-- Login simples para protótipo
-- Cadastro de propriedades e tratores
-- Edição e exclusão de propriedades, tratores e cercas
-- Dashboard com total de tratores, online, última posição e status
-- Mapa com OpenStreetMap e marcador em tempo real
-- Simulador GPS movendo o trator automaticamente
-- Painel de demonstração com iniciar, pausar, avançar, resetar e forçar saída da cerca
-- Geofence com criação por clique no mapa
-- Detecção de saída da cerca virtual
-- Histórico de posições com filtros
-- Registro e visualização de alertas
-- Simulação de envio de alerta para WhatsApp
-- Endpoint de telemetria real para integração com ESP32 ou outro gateway
-
-## Fluxo da simulação
-
-1. O backend inicia com dados seed.
-2. Um intervalo de 5 segundos move o trator por um trajeto fixo.
-3. Cada nova posição é persistida no Firebase Realtime Database.
-4. A posição é comparada com o polígono da cerca virtual.
-5. Quando o status muda de `inside` para `outside`, o sistema grava um alerta com a mensagem:
-
-```text
-Alerta AgriTrack: o trator [NOME] saiu da cerca virtual [NOME_DA_CERCA] às [HORÁRIO].
+```env
+VITE_API_URL=http://localhost:4000/api
+VITE_WS_URL=ws://localhost:4000
 ```
 
-6. O backend publica a atualização por WebSocket.
-7. O frontend atualiza dashboard, mapa e alerta visual.
+## Firebase
+
+O backend carrega `backend/firebase.env` automaticamente. A credencial admin deve ficar em:
+
+```text
+backend/service-account.json
+```
+
+Também é possível apontar outro caminho no `backend/firebase.env`:
+
+```env
+FIREBASE_SERVICE_ACCOUNT_PATH=C:\caminho\service-account.json
+```
+
+Sem credencial admin válida, o backend retorna erro e não grava dados fora do Firebase.
+
+## Fluxo operacional
+
+1. O usuário cria conta na tela de login.
+2. O usuário cadastra propriedades, tratores e cercas digitais.
+3. Um dispositivo real envia posições para `POST /api/telemetry`.
+4. O backend valida a posição contra a cerca vinculada ao trator.
+5. O backend atualiza trator, histórico, mapa em tempo real e alertas.
+6. Se houver `WHATSAPP_WEBHOOK_URL`, o backend tenta enviar o alerta para o webhook configurado.
+
+## Exemplo de telemetria
+
+```http
+POST http://localhost:4000/api/telemetry
+Content-Type: application/json
+```
+
+```json
+{
+  "deviceCode": "ESP32-GPS-001",
+  "deviceToken": "TOKEN_DO_DISPOSITIVO",
+  "latitude": -21.7317,
+  "longitude": -43.3488,
+  "timestamp": "2026-05-15T12:00:00Z",
+  "speed": 12,
+  "battery": 87
+}
+```
+
+O `deviceCode` e o `deviceToken` devem estar cadastrados em um trator.
 
 ## API principal
 
 - `POST /api/auth/login`
+- `POST /api/auth/register`
+- `GET/PUT /api/users/:id`
 - `GET/POST /api/properties`
 - `GET/POST /api/devices`
 - `GET/POST /api/geofences`
@@ -87,53 +98,22 @@ Alerta AgriTrack: o trator [NOME] saiu da cerca virtual [NOME_DA_CERCA] às [HOR
 - `GET /api/dashboard`
 - `GET /api/realtime`
 - `POST /api/telemetry`
-- `GET/PUT /api/simulator`
-- `POST /api/simulator/start`
-- `POST /api/simulator/pause`
-- `POST /api/simulator/reset`
-- `POST /api/simulator/step`
-- `POST /api/simulator/force-exit`
 - `WS ws://localhost:4000`
 
-## Integrações futuras
+## WhatsApp
 
-### Traccar
+Configure no `backend/firebase.env`:
 
-- Substituir o simulador por ingestão real do Traccar.
-- Consumir posições pela API REST ou WebSocket/Event Forwarder do Traccar.
-- Mapear `deviceId`, `position`, `geofence` e `events` para o modelo do AgriTrack.
-- Manter o frontend atual e trocar a origem dos dados para o Traccar.
-
-### ESP32 + GPS NEO-6M + SIM800L
-
-- O ESP32 pode ler latitude/longitude do NEO-6M.
-- O SIM800L pode enviar os dados por HTTP ou MQTT.
-- O protótipo já expõe um endpoint para isso:
-
-```json
-{
-  "deviceCode": "ESP32-GPS-001",
-  "latitude": -21.7317,
-  "longitude": -43.3488,
-  "timestamp": "2026-05-14T12:00:00Z"
-}
+```env
+WHATSAPP_WEBHOOK_URL=https://sua-api.exemplo/webhook
+WHATSAPP_WEBHOOK_TOKEN=token-opcional
 ```
 
-- Esses dados entram no mesmo fluxo do simulador, atualizam mapa, histórico e alertas em tempo real.
-- No futuro, eles podem ser persistidos diretamente ou encaminhados ao Traccar.
-
-### WhatsApp
-
-- Substituir o status `simulado` por integração com Evolution API ou Z-API.
-- No momento do alerta, enviar a mensagem para um número configurado.
-- Registrar no banco o retorno real da API para marcar `enviado` ou `erro`.
+O backend envia `POST` com `message`, `deviceId`, `deviceName`, `geofenceName`, `type` e `createdAt`. Sem webhook configurado, o alerta fica com status `pendente`.
 
 ## Observações técnicas
 
-- O backend usa o Firebase Realtime Database informado na configuração do projeto.
-- Se o Firebase responder com `Permission denied`, o backend entra automaticamente em modo demo local e persiste em `backend/agritrack-demo-store.json`.
-- O fluxo do simulador está em `backend/src/services/simulatorService.ts`.
-- O controle do simulador está em `backend/src/services/simulatorService.ts`.
+- O backend não inicia loop automático de posições.
+- O backend não salva em JSON local quando o Firebase falha.
 - A ingestão de telemetria está em `backend/src/services/telemetryService.ts`.
 - A lógica de geofence está em `backend/src/services/geofenceService.ts`.
-- O projeto foi estruturado para facilitar a troca do backend simulado por Traccar no futuro.

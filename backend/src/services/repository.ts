@@ -1,15 +1,27 @@
 import { get, push, ref, remove, set, update } from "firebase/database";
-import { readLocalNode, removeLocalNode, updateLocalNode, writeLocalNode } from "../db/localStore.js";
-import { realtimeDb } from "../db/firebase.js";
-import type { Alert, Device, Geofence, Position, Property, SimulatorState } from "../types/index.js";
+import { firebaseConnection } from "../db/firebase.js";
+import type { Alert, AppSettings, Device, Geofence, PlannedRoute, Position, Property } from "../types/index.js";
 
-type CollectionName = "users" | "properties" | "devices" | "geofences" | "positions" | "alerts" | "meta" | "simulator";
+type CollectionName =
+  | "users"
+  | "properties"
+  | "devices"
+  | "geofences"
+  | "positions"
+  | "alerts"
+  | "plannedRoutes"
+  | "meta"
+  | "settings";
 
 type User = {
   id: number;
   email: string;
-  password: string;
+  password?: string;
+  passwordHash?: string;
+  passwordSalt?: string;
   name: string;
+  role?: "admin" | "operator";
+  createdAt?: string;
 };
 
 type Counters = {
@@ -19,6 +31,7 @@ type Counters = {
   geofences: number;
   positions: number;
   alerts: number;
+  plannedRoutes: number;
 };
 
 type Meta = {
@@ -32,11 +45,12 @@ type CollectionMap = {
   geofences: Geofence;
   positions: Position;
   alerts: Alert;
+  plannedRoutes: PlannedRoute;
   meta: Meta;
-  simulator: SimulatorState;
+  settings: AppSettings;
 };
 
-type IncrementalCollectionName = "users" | "properties" | "devices" | "geofences" | "positions" | "alerts";
+type IncrementalCollectionName = "users" | "properties" | "devices" | "geofences" | "positions" | "alerts" | "plannedRoutes";
 
 const counterDefaults: Counters = {
   users: 0,
@@ -44,66 +58,91 @@ const counterDefaults: Counters = {
   devices: 0,
   geofences: 0,
   positions: 0,
-  alerts: 0
+  alerts: 0,
+  plannedRoutes: 0
 };
 
-let storageMode: "firebase" | "local-fallback" = "firebase";
+type StorageMode = "firebase-admin" | "firebase-client";
 
-function collectionRef(name: CollectionName) {
-  return ref(realtimeDb, name);
+const storageMode: StorageMode = firebaseConnection.mode === "admin" ? "firebase-admin" : "firebase-client";
+
+function isPermissionDenied(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return /permission_denied|permission denied|insufficient permission/i.test(error.message);
+}
+
+function firebaseError(error: unknown) {
+  if (error instanceof Error && isPermissionDenied(error)) {
+    return new Error(
+      "Firebase Realtime Database negou permissao. Coloque a service account em backend/service-account.json, configure FIREBASE_SERVICE_ACCOUNT_PATH/FIREBASE_SERVICE_ACCOUNT_JSON, ou ajuste as regras do banco."
+    );
+  }
+
+  return error;
+}
+
+async function runFirebaseOperation<T>(operation: () => Promise<T>) {
+  try {
+    return await operation();
+  } catch (error) {
+    throw firebaseError(error);
+  }
+}
+
+function createKey(name: CollectionName) {
+  if (firebaseConnection.mode === "admin") {
+    return firebaseConnection.db.ref(name).push().key;
+  }
+
+  return push(ref(firebaseConnection.db, name)).key;
 }
 
 async function readNode<T>(path: string): Promise<T | null> {
-  if (storageMode === "local-fallback") {
-    return readLocalNode<T>(path);
-  }
-
-  try {
-    const snapshot = await get(ref(realtimeDb, path));
-    return snapshot.exists() ? (snapshot.val() as T) : null;
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("Permission denied")) {
-      storageMode = "local-fallback";
-      return readLocalNode<T>(path);
+  return runFirebaseOperation(async () => {
+    if (firebaseConnection.mode === "admin") {
+      const snapshot = await firebaseConnection.db.ref(path).get();
+      return snapshot.exists() ? (snapshot.val() as T) : null;
     }
-    throw error;
-  }
+
+    const snapshot = await get(ref(firebaseConnection.db, path));
+    return snapshot.exists() ? (snapshot.val() as T) : null;
+  });
 }
 
 async function writeNode(path: string, value: unknown) {
-  if (storageMode === "local-fallback") {
-    await writeLocalNode(path, value);
-    return;
-  }
-
-  try {
-    await set(ref(realtimeDb, path), value);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("Permission denied")) {
-      storageMode = "local-fallback";
-      await writeLocalNode(path, value);
+  await runFirebaseOperation(async () => {
+    if (firebaseConnection.mode === "admin") {
+      await firebaseConnection.db.ref(path).set(value);
       return;
     }
-    throw error;
-  }
+
+    await set(ref(firebaseConnection.db, path), value);
+  });
 }
 
 async function updateNode(path: string, value: Record<string, unknown>) {
-  if (storageMode === "local-fallback") {
-    await updateLocalNode(path, value);
-    return;
-  }
-
-  try {
-    await update(ref(realtimeDb, path), value);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("Permission denied")) {
-      storageMode = "local-fallback";
-      await updateLocalNode(path, value);
+  await runFirebaseOperation(async () => {
+    if (firebaseConnection.mode === "admin") {
+      await firebaseConnection.db.ref(path).update(value);
       return;
     }
-    throw error;
-  }
+
+    await update(ref(firebaseConnection.db, path), value);
+  });
+}
+
+async function removeNode(path: string) {
+  await runFirebaseOperation(async () => {
+    if (firebaseConnection.mode === "admin") {
+      await firebaseConnection.db.ref(path).remove();
+      return;
+    }
+
+    await remove(ref(firebaseConnection.db, path));
+  });
 }
 
 async function ensureCounters() {
@@ -137,7 +176,10 @@ export async function insertWithIncrement<K extends IncrementalCollectionName>(
   const counters = await ensureCounters();
   const id = counters[name] + 1;
   const record = { id, ...item } as CollectionMap[K];
-  const nodeRef = storageMode === "firebase" ? push(collectionRef(name)).key : `local-${id}`;
+  const nodeRef = createKey(name);
+  if (!nodeRef) {
+    throw new Error("Não foi possível gerar chave no Firebase");
+  }
   await writeNode(`${name}/${nodeRef}`, record);
   await updateNode("meta/counters", { [name]: id });
 
@@ -185,21 +227,13 @@ export async function deleteWhereId<K extends IncrementalCollectionName>(name: K
   }
 
   const [key] = entry;
-  if (storageMode === "local-fallback") {
-    await removeLocalNode(`${name}/${key}`);
-  } else {
-    try {
-      await remove(ref(realtimeDb, `${name}/${key}`));
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("Permission denied")) {
-        storageMode = "local-fallback";
-        await removeLocalNode(`${name}/${key}`);
-      } else {
-        throw error;
-      }
-    }
-  }
+  await removeNode(`${name}/${key}`);
   return true;
+}
+
+export async function overwriteCollection<K extends CollectionName>(name: K, value: Record<string, CollectionMap[K]>) {
+  await removeNode(name);
+  await writeNode(name, value);
 }
 
 export async function readSingleton<K extends CollectionName>(name: K): Promise<CollectionMap[K] | null> {
@@ -210,9 +244,11 @@ export async function writeSingleton<K extends CollectionName>(name: K, value: C
   await writeNode(name, value);
 }
 
-export async function overwriteCollection<K extends CollectionName>(name: K, value: Record<string, CollectionMap[K]>) {
-  await remove(collectionRef(name));
-  await writeNode(name, value);
+export function getStorageStatus() {
+  return {
+    mode: storageMode,
+    firebaseConnection: firebaseConnection.mode
+  };
 }
 
 export type { User };

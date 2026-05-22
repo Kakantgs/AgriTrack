@@ -1,9 +1,24 @@
 export type LoginResponse = {
   token: string;
   user: {
+    id: number;
     email: string;
     name: string;
+    role?: "admin" | "operator";
   };
+};
+
+export type UserAccount = {
+  id: number;
+  name: string;
+  email: string;
+  role: "admin" | "operator";
+  createdAt: string | null;
+};
+
+export type WhatsappSettings = {
+  webhookUrl: string;
+  hasToken: boolean;
 };
 
 export type Property = {
@@ -18,12 +33,15 @@ export type Device = {
   name: string;
   plate: string;
   deviceCode: string;
+  deviceToken?: string;
   status: "active" | "inactive";
   propertyId: number;
   propertyName: string;
   lastLatitude: number;
   lastLongitude: number;
   lastUpdatedAt: string;
+  lastSpeed?: number | null;
+  lastBattery?: number | null;
   geofenceStatus: "inside" | "outside";
   online: boolean;
 };
@@ -36,6 +54,14 @@ export type Geofence = {
   coordinates: [number, number][];
 };
 
+export type PlannedRoute = {
+  id: number;
+  name: string;
+  deviceId: number;
+  points: [number, number][];
+  createdAt: string;
+};
+
 export type Position = {
   id: number;
   deviceId: number;
@@ -44,6 +70,8 @@ export type Position = {
   longitude: number;
   status: "inside" | "outside";
   recordedAt: string;
+  speed?: number | null;
+  battery?: number | null;
 };
 
 export type Alert = {
@@ -53,7 +81,7 @@ export type Alert = {
   geofenceName: string;
   type: "geofence_exit";
   message: string;
-  whatsappStatus: "simulado" | "enviado" | "erro";
+  whatsappStatus: "pendente" | "enviado" | "erro";
   createdAt: string;
 };
 
@@ -69,15 +97,9 @@ export type DashboardData = {
   };
 };
 
-export type SimulatorState = {
-  mode: "running" | "paused";
-  currentIndex: number;
-  intervalMs: number;
-  lastTickAt: string | null;
-};
-
 export type TelemetryPayload = {
   deviceCode: string;
+  deviceToken?: string;
   latitude: number;
   longitude: number;
   timestamp?: string;
@@ -90,5 +112,4 @@ export type RealtimePayload = {
   geofence: Geofence | null;
   latestPosition: Position;
   latestAlert: Alert | null;
-  simulator: SimulatorState;
 };

@@ -1,4 +1,4 @@
-import { Bell, LayoutDashboard, Map, Tractor, Fence, History, LogOut, Warehouse } from "lucide-react";
+import { Bell, LayoutDashboard, Map, Tractor, Fence, History, LogOut, Settings, Users, Warehouse } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
@@ -8,7 +8,9 @@ const navItems = [
   { to: "/tratores", label: "Tratores", icon: Tractor },
   { to: "/cercas", label: "Cercas", icon: Fence },
   { to: "/historico", label: "Histórico", icon: History },
-  { to: "/alertas", label: "Alertas", icon: Bell }
+  { to: "/alertas", label: "Alertas", icon: Bell },
+  { to: "/usuarios", label: "Usuários", icon: Users },
+  { to: "/configuracoes", label: "Configurações", icon: Settings }
 ];
 
 export function Layout() {
@@ -31,6 +33,7 @@ export function Layout() {
           <button
             onClick={() => {
               localStorage.removeItem("agritrack-token");
+              localStorage.removeItem("agritrack-user");
               navigate("/");
             }}
             className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-brand-500 hover:text-brand-700"
