@@ -1,5 +1,16 @@
 import { insertWithIncrement } from "./repository.js";
 import { readSingleton } from "./repository.js";
+const activeAlertWindowMinutes = Number(process.env.ACTIVE_ALERT_WINDOW_MINUTES ?? 15);
+export function isActiveAlert(alert) {
+    if (!alert) {
+        return false;
+    }
+    const createdAt = new Date(alert.createdAt).getTime();
+    if (Number.isNaN(createdAt)) {
+        return false;
+    }
+    return Date.now() - createdAt <= activeAlertWindowMinutes * 60000;
+}
 async function sendWhatsappAlert(message, payload) {
     const settings = await readSingleton("settings");
     const webhookUrl = settings?.whatsapp?.webhookUrl ?? process.env.WHATSAPP_WEBHOOK_URL;

@@ -27,15 +27,26 @@ export const geofenceSchema = z.object({
     deviceId: z.coerce.number().int().positive(),
     coordinates: z.array(z.tuple([z.number(), z.number()])).min(3)
 });
-export const telemetrySchema = z.object({
+export const telemetrySchema = z.preprocess((value) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        return value;
+    }
+    const payload = value;
+    return {
+        ...payload,
+        deviceCode: payload.deviceCode ?? payload.deviceId,
+        latitude: payload.latitude ?? payload.lat,
+        longitude: payload.longitude ?? payload.lng
+    };
+}, z.object({
     deviceCode: nonEmptyString,
     deviceToken: nonEmptyString.optional(),
-    latitude: z.number().gte(-90).lte(90),
-    longitude: z.number().gte(-180).lte(180),
+    latitude: z.coerce.number().gte(-90).lte(90),
+    longitude: z.coerce.number().gte(-180).lte(180),
     timestamp: z.string().datetime().optional(),
-    battery: z.number().gte(0).lte(100).optional(),
-    speed: z.number().gte(0).optional()
-});
+    battery: z.coerce.number().gte(0).lte(100).optional(),
+    speed: z.coerce.number().gte(0).optional()
+}));
 export const userUpdateSchema = z.object({
     name: z.string().trim().min(2),
     role: z.enum(["admin", "operator"])

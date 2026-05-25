@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "author": "AgriTrack",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp",
+      "top": 40,
+      "left": 20,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledAlerta",
+      "top": -95,
+      "left": 360,
+      "attrs": {
+        "color": "red",
+        "label": "FORA DA CERCA"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "rAlerta",
+      "top": -35,
+      "left": 275,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledOnline",
+      "top": 15,
+      "left": 360,
+      "attrs": {
+        "color": "green",
+        "label": "ONLINE"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "rOnline",
+      "top": 75,
+      "left": 275,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnTeste",
+      "top": 215,
+      "left": 360,
+      "attrs": {
+        "color": "blue",
+        "label": "TESTE ALERTA"
+      }
+    },
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": 300,
+      "left": 280,
+      "attrs": {
+        "i2cAddress": "0x3c"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "txtGps",
+      "top": -70,
+      "left": 20,
+      "attrs": {
+        "text": "GPS simulado no sketch"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "txtHttp",
+      "top": -35,
+      "left": 20,
+      "attrs": {
+        "text": "POST /api/telemetry"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "txtPower",
+      "top": 360,
+      "left": 20,
+      "attrs": {
+        "text": "Hardware real: bateria 12V -> LM2596 -> 5V ESP32"
+      }
+    }
+  ],
+  "connections": [
+    ["esp:2", "rAlerta:1", "green", []],
+    ["rAlerta:2", "ledAlerta:A", "green", []],
+    ["ledAlerta:C", "esp:GND.1", "black", []],
+    ["esp:4", "rOnline:1", "green", []],
+    ["rOnline:2", "ledOnline:A", "green", []],
+    ["ledOnline:C", "esp:GND.2", "black", []],
+    ["esp:18", "btnTeste:1.l", "blue", []],
+    ["btnTeste:2.l", "esp:GND.3", "black", []],
+    ["esp:21", "oled1:SDA", "green", []],
+    ["esp:22", "oled1:SCL", "yellow", []],
+    ["esp:3V3", "oled1:VCC", "red", []],
+    ["esp:GND.1", "oled1:GND", "black", []]
+  ],
+  "dependencies": {}
+}

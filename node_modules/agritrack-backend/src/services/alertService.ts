@@ -2,6 +2,21 @@ import { insertWithIncrement } from "./repository.js";
 import type { Alert, WhatsappStatus } from "../types/index.js";
 import { readSingleton } from "./repository.js";
 
+const activeAlertWindowMinutes = Number(process.env.ACTIVE_ALERT_WINDOW_MINUTES ?? 15);
+
+export function isActiveAlert(alert: Alert | null | undefined) {
+  if (!alert) {
+    return false;
+  }
+
+  const createdAt = new Date(alert.createdAt).getTime();
+  if (Number.isNaN(createdAt)) {
+    return false;
+  }
+
+  return Date.now() - createdAt <= activeAlertWindowMinutes * 60_000;
+}
+
 async function sendWhatsappAlert(message: string, payload: Record<string, unknown>): Promise<WhatsappStatus> {
   const settings = await readSingleton("settings");
   const webhookUrl = settings?.whatsapp?.webhookUrl ?? process.env.WHATSAPP_WEBHOOK_URL;

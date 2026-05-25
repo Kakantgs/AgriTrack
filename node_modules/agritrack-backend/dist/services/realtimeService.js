@@ -1,4 +1,5 @@
 import { WebSocketServer } from "ws";
+import { isActiveAlert } from "./alertService.js";
 import { getGeofenceByDevice } from "./geofenceService.js";
 import { verifyAuthToken } from "./authService.js";
 import { withComputedOnlineStatus } from "./deviceStatus.js";
@@ -10,15 +11,18 @@ export function createRealtimeServer(server) {
         const token = url.searchParams.get("token");
         if (!token || !verifyAuthToken(token)) {
             socket.close(1008, "Autenticação obrigatória");
+            return;
         }
     });
     async function snapshot() {
         const devices = await listCollection("devices");
         const positions = await listCollection("positions");
         const alerts = await listCollection("alerts");
-        const device = devices.sort((left, right) => left.id - right.id)[0];
         const latestPosition = positions.sort((left, right) => right.id - left.id)[0];
-        const latestAlert = alerts.sort((left, right) => right.id - left.id)[0] ?? null;
+        const device = latestPosition
+            ? devices.find((item) => item.id === latestPosition.deviceId)
+            : devices.sort((left, right) => left.id - right.id)[0];
+        const latestAlert = alerts.sort((left, right) => right.id - left.id).find(isActiveAlert) ?? null;
         if (!device || !latestPosition) {
             return null;
         }

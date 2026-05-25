@@ -59,9 +59,24 @@ deviceRoutes.put("/:id", validateBody(deviceSchema), async (request, response) =
     try {
         const id = Number(request.params.id);
         const { name, plate, deviceCode, status, propertyId } = request.body;
-        const property = await getById("properties", propertyId);
+        const [property, currentDevice, linkedGeofences] = await Promise.all([
+            getById("properties", propertyId),
+            getById("devices", id),
+            listCollection("geofences")
+        ]);
         if (!property) {
             response.status(400).json({ message: "Propriedade não encontrada" });
+            return;
+        }
+        if (!currentDevice) {
+            response.status(404).json({ message: "Trator não encontrado" });
+            return;
+        }
+        const hasGeofenceInAnotherProperty = linkedGeofences.some((geofence) => geofence.deviceId === id && geofence.propertyId !== propertyId);
+        if (hasGeofenceInAnotherProperty) {
+            response.status(409).json({
+                message: "Atualize ou remova as cercas vinculadas antes de mover o trator para outra propriedade"
+            });
             return;
         }
         const device = await patchWhereId("devices", id, {
@@ -100,7 +115,17 @@ deviceRoutes.post("/:id/rotate-token", async (request, response) => {
 });
 deviceRoutes.delete("/:id", async (request, response) => {
     try {
-        const removed = await deleteWhereId("devices", Number(request.params.id));
+        const id = Number(request.params.id);
+        const [geofences, plannedRoutes] = await Promise.all([listCollection("geofences"), listCollection("plannedRoutes")]);
+        const hasLinkedGeofence = geofences.some((geofence) => geofence.deviceId === id);
+        const hasLinkedRoute = plannedRoutes.some((route) => route.deviceId === id);
+        if (hasLinkedGeofence || hasLinkedRoute) {
+            response.status(409).json({
+                message: "Remova as cercas e rotas vinculadas antes de excluir o trator"
+            });
+            return;
+        }
+        const removed = await deleteWhereId("devices", id);
         if (!removed) {
             response.status(404).json({ message: "Trator não encontrado" });
             return;

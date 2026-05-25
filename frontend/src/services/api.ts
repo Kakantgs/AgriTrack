@@ -166,7 +166,7 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(payload)
     }),
-  getRealtimeSnapshot: () => request<RealtimePayload>("/realtime"),
+  getRealtimeSnapshot: () => request<RealtimePayload | null>("/realtime"),
   sendTelemetry: (payload: TelemetryPayload) =>
     request("/telemetry", {
       method: "POST",

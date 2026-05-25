@@ -30,6 +30,12 @@ export function DevicesPage() {
     const [deviceData, propertyData] = await Promise.all([api.getDevices(), api.getProperties()]);
     setDevices(deviceData);
     setProperties(propertyData);
+    setForm((current) => ({
+      ...current,
+      propertyId: propertyData.some((property) => property.id === current.propertyId)
+        ? current.propertyId
+        : propertyData[0]?.id ?? 1
+    }));
   }
 
   useEffect(() => {

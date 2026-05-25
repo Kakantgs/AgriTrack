@@ -44,7 +44,19 @@ propertyRoutes.put("/:id", validateBody(propertySchema), async (request, respons
 
 propertyRoutes.delete("/:id", async (request, response) => {
   try {
-    const removed = await deleteWhereId("properties", Number(request.params.id));
+    const id = Number(request.params.id);
+    const [devices, geofences] = await Promise.all([listCollection("devices"), listCollection("geofences")]);
+    const hasLinkedDevice = devices.some((device) => device.propertyId === id);
+    const hasLinkedGeofence = geofences.some((geofence) => geofence.propertyId === id);
+
+    if (hasLinkedDevice || hasLinkedGeofence) {
+      response.status(409).json({
+        message: "Remova ou mova os tratores e cercas vinculados antes de excluir a propriedade"
+      });
+      return;
+    }
+
+    const removed = await deleteWhereId("properties", id);
     if (!removed) {
       response.status(404).json({ message: "Propriedade não encontrada" });
       return;

@@ -1,17 +1,49 @@
-import { Activity, AlertTriangle, MapPin, Radio } from "lucide-react";
+import { Activity, AlertTriangle, MapPin, PlayCircle, Radio } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AlertBanner } from "../components/AlertBanner";
 import { Card } from "../components/Card";
 import { StatusBadge } from "../components/StatusBadge";
 import { useRealtime } from "../hooks/useRealtime";
 import { api } from "../services/api";
-import type { DashboardData, Device, Property } from "../types";
+import type { DashboardData, Device, Geofence, Property, TelemetryPayload } from "../types";
+import { isPointInsidePolygon } from "../utils/geo";
+import { getErrorMessage } from "../utils/errors";
+
+function getPolygonCenter(points: [number, number][]) {
+  return points.reduce(
+    (center, point) => [center[0] + point[0] / points.length, center[1] + point[1] / points.length] as [number, number],
+    [0, 0] as [number, number]
+  );
+}
+
+function getDemoPoint(geofence: Geofence | undefined, mode: "inside" | "outside", device: Device): [number, number] {
+  if (!geofence || geofence.coordinates.length === 0) {
+    return [device.lastLatitude, device.lastLongitude];
+  }
+
+  if (mode === "inside") {
+    const center = getPolygonCenter(geofence.coordinates);
+    return isPointInsidePolygon(center, geofence.coordinates) ? center : geofence.coordinates[0];
+  }
+
+  const latitudes = geofence.coordinates.map(([latitude]) => latitude);
+  const longitudes = geofence.coordinates.map(([, longitude]) => longitude);
+  const latitudeRange = Math.max(...latitudes) - Math.min(...latitudes);
+  const longitudeRange = Math.max(...longitudes) - Math.min(...longitudes);
+  const offset = Math.max(latitudeRange, longitudeRange, 0.001) * 1.4;
+
+  return [Math.max(...latitudes) + offset, Math.max(...longitudes) + offset];
+}
 
 export function DashboardPage() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
+  const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [filters, setFilters] = useState({ propertyId: "", deviceId: "", date: "" });
+  const [demoDeviceId, setDemoDeviceId] = useState<number | null>(null);
+  const [demoFeedback, setDemoFeedback] = useState("");
+  const [isSendingDemo, setIsSendingDemo] = useState(false);
   const { snapshot, latestAlert, connectionState, lastMessageAt } = useRealtime();
 
   async function refreshDashboard() {
@@ -19,16 +51,76 @@ export function DashboardPage() {
     setDashboard(data);
   }
 
+  async function loadOperationalData() {
+    const [propertyData, deviceData, geofenceData] = await Promise.all([
+      api.getProperties(),
+      api.getDevices(),
+      api.getGeofences()
+    ]);
+    setProperties(propertyData);
+    setDevices(deviceData);
+    setGeofences(geofenceData);
+    setDemoDeviceId((current) => current ?? snapshot?.device.id ?? deviceData[0]?.id ?? null);
+  }
+
   useEffect(() => {
-    Promise.all([api.getProperties(), api.getDevices()]).then(([propertyData, deviceData]) => {
-      setProperties(propertyData);
-      setDevices(deviceData);
-    });
+    loadOperationalData();
   }, []);
 
   useEffect(() => {
     refreshDashboard();
   }, [snapshot?.latestPosition.id, filters.propertyId, filters.deviceId, filters.date]);
+
+  useEffect(() => {
+    if (snapshot?.device) {
+      setDemoDeviceId((current) => current ?? snapshot.device.id);
+    }
+  }, [snapshot?.device.id]);
+
+  async function sendDemoTelemetry(mode: "inside" | "outside") {
+    const device = devices.find((item) => item.id === demoDeviceId);
+
+    if (!device) {
+      setDemoFeedback("Selecione um trator para a demonstração.");
+      return;
+    }
+
+    if (!device.deviceToken) {
+      setDemoFeedback("Este trator ainda não tem token. Abra Tratores para gerar/listar o token.");
+      return;
+    }
+
+    const geofence = geofences.find((item) => item.deviceId === device.id);
+    if (!geofence && mode === "outside") {
+      setDemoFeedback("Cadastre uma cerca para este trator antes de demonstrar saída de área.");
+      return;
+    }
+
+    const [latitude, longitude] = getDemoPoint(geofence, mode, device);
+    const payload: TelemetryPayload = {
+      deviceCode: device.deviceCode,
+      deviceToken: device.deviceToken,
+      latitude,
+      longitude,
+      timestamp: new Date().toISOString(),
+      speed: mode === "inside" ? 8 : 14,
+      battery: mode === "inside" ? 91 : 88
+    };
+
+    try {
+      setIsSendingDemo(true);
+      await api.sendTelemetry(payload);
+      await Promise.all([refreshDashboard(), loadOperationalData()]);
+      setDemoFeedback(mode === "inside" ? "Ponto dentro da cerca enviado." : "Ponto fora da cerca enviado. O alerta deve aparecer em tempo real.");
+    } catch (error) {
+      setDemoFeedback(getErrorMessage(error, "Não foi possível enviar a telemetria de demonstração."));
+    } finally {
+      setIsSendingDemo(false);
+    }
+  }
+
+  const demoDevice = devices.find((device) => device.id === demoDeviceId) ?? null;
+  const demoGeofence = demoDevice ? geofences.find((geofence) => geofence.deviceId === demoDevice.id) : null;
 
   return (
     <div className="space-y-6">
@@ -199,6 +291,60 @@ export function DashboardPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <Card title="Demonstração da feira">
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 rounded-2xl bg-brand-50 p-4 text-sm text-brand-800">
+              <PlayCircle size={20} className="mt-0.5 shrink-0" />
+              <p>
+                Use estes controles para mostrar telemetria real entrando pela API, atualização do mapa e alerta de saída da cerca
+                sem depender do dispositivo físico.
+              </p>
+            </div>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">Trator da demonstração</span>
+              <select
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3"
+                value={demoDeviceId ?? ""}
+                onChange={(event) => setDemoDeviceId(event.target.value ? Number(event.target.value) : null)}
+              >
+                {devices.length === 0 ? <option value="">Nenhum trator cadastrado</option> : null}
+                {devices.map((device) => (
+                  <option key={device.id} value={device.id}>
+                    {device.name} - {device.deviceCode}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Cerca vinculada</p>
+                <p className="mt-1 font-semibold text-slate-850">{demoGeofence?.name ?? "Nenhuma cerca"}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Token do dispositivo</p>
+                <p className="mt-1 font-semibold text-slate-850">{demoDevice?.deviceToken ? "Configurado" : "Pendente"}</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button
+                className="rounded-2xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                disabled={isSendingDemo || !demoDevice}
+                onClick={() => sendDemoTelemetry("inside")}
+              >
+                Enviar ponto dentro
+              </button>
+              <button
+                className="rounded-2xl bg-rose-600 px-4 py-3 font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50"
+                disabled={isSendingDemo || !demoDevice}
+                onClick={() => sendDemoTelemetry("outside")}
+              >
+                Simular saída da cerca
+              </button>
+            </div>
+            {demoFeedback ? <p className="text-sm text-slate-600">{demoFeedback}</p> : null}
+          </div>
+        </Card>
+
         <Card title="Integração de telemetria">
           <div className="space-y-4">
             <p className="text-sm text-slate-600">
@@ -224,6 +370,9 @@ export function DashboardPage() {
             </p>
           </div>
         </Card>
+      </section>
+
+      <section>
         <Card title="Qualidade da telemetria">
           <div className="space-y-4">
             <div className="rounded-2xl bg-slate-50 p-4">

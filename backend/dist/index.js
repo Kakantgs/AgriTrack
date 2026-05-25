@@ -38,6 +38,7 @@ async function bootstrap() {
     });
     app.use("/api/auth", authRoutes);
     app.use("/api/telemetry", createTelemetryRoutes(realtime.broadcast));
+    app.use("/api/gps", createTelemetryRoutes(realtime.broadcast));
     app.use(requireAuth);
     app.use("/api/properties", propertyRoutes);
     app.use("/api/devices", deviceRoutes);
@@ -51,7 +52,15 @@ async function bootstrap() {
     app.get("/api/realtime", async (_request, response) => {
         response.json(await realtime.snapshot());
     });
-    const port = 4000;
+    const port = Number(process.env.PORT ?? 4000);
+    server.on("error", (error) => {
+        if (error.code === "EADDRINUSE") {
+            console.error(`Porta ${port} já está em uso. Encerre o processo antigo ou inicie com outra porta: PORT=4001 npm run start --workspace backend`);
+            process.exit(1);
+        }
+        console.error("Erro ao iniciar servidor HTTP", error);
+        process.exit(1);
+    });
     server.listen(port, () => {
         console.log(`AgriTrack backend running on http://localhost:${port}`);
     });

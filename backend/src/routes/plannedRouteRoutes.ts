@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validateBody } from "../middleware/validate.js";
 import { auditLog } from "../services/auditService.js";
-import { deleteWhereId, insertWithIncrement, listCollection } from "../services/repository.js";
+import { deleteWhereId, getById, insertWithIncrement, listCollection } from "../services/repository.js";
 import { plannedRouteSchema } from "../validation/schemas.js";
 
 export const plannedRouteRoutes = Router();
@@ -22,6 +22,13 @@ plannedRouteRoutes.get("/", async (request, response) => {
 
 plannedRouteRoutes.post("/", validateBody(plannedRouteSchema), async (request, response) => {
   try {
+    const device = await getById("devices", request.body.deviceId);
+
+    if (!device) {
+      response.status(400).json({ message: "Trator não encontrado" });
+      return;
+    }
+
     const route = await insertWithIncrement("plannedRoutes", {
       ...request.body,
       createdAt: new Date().toISOString()

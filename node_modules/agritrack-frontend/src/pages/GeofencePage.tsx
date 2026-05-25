@@ -54,13 +54,16 @@ export function GeofencePage() {
     setDevices(deviceData);
     setProperties(propertyData);
     setGeofences(geofenceData);
-    setForm((current) => ({
-      ...current,
-      propertyId: propertyData.some((property) => property.id === current.propertyId)
+    setForm((current) => {
+      const propertyId = propertyData.some((property) => property.id === current.propertyId)
         ? current.propertyId
-        : propertyData[0]?.id ?? 1,
-      deviceId: deviceData.some((device) => device.id === current.deviceId) ? current.deviceId : deviceData[0]?.id ?? 1
-    }));
+        : propertyData[0]?.id ?? 1;
+      const deviceId = deviceData.some((device) => device.id === current.deviceId && device.propertyId === propertyId)
+        ? current.deviceId
+        : deviceData.find((device) => device.propertyId === propertyId)?.id ?? 1;
+
+      return { ...current, propertyId, deviceId };
+    });
   }
 
   useEffect(() => {
@@ -70,6 +73,10 @@ export function GeofencePage() {
   const center = useMemo(() => coordinates[0] ?? userLocation ?? defaultCenter, [coordinates, userLocation]);
   const mapBounds = coordinates.length > 0 ? coordinates : userLocation ? [userLocation] : null;
   const selectedArea = useMemo(() => formatAreaHectares(coordinates), [coordinates]);
+  const devicesForSelectedProperty = useMemo(
+    () => devices.filter((device) => device.propertyId === form.propertyId),
+    [devices, form.propertyId]
+  );
 
   function updatePoint(index: number, point: [number, number]) {
     setCoordinates((current) => current.map((item, itemIndex) => (itemIndex === index ? point : item)));
@@ -114,6 +121,10 @@ export function GeofencePage() {
       setFeedback("Cadastre pelo menos uma propriedade e um trator antes de salvar a cerca.");
       return;
     }
+    if (devicesForSelectedProperty.length === 0) {
+      setFeedback("Selecione uma propriedade que tenha pelo menos um trator vinculado.");
+      return;
+    }
     try {
       if (editingId) {
         await api.updateGeofence(editingId, { ...form, coordinates });
@@ -143,7 +154,11 @@ export function GeofencePage() {
           <select
             className="w-full rounded-2xl border border-slate-200 px-4 py-3"
             value={form.propertyId}
-            onChange={(event) => setForm((current) => ({ ...current, propertyId: Number(event.target.value) }))}
+            onChange={(event) => {
+              const nextPropertyId = Number(event.target.value);
+              const nextDeviceId = devices.find((device) => device.propertyId === nextPropertyId)?.id ?? 1;
+              setForm((current) => ({ ...current, propertyId: nextPropertyId, deviceId: nextDeviceId }));
+            }}
           >
             {properties.map((property) => (
               <option key={property.id} value={property.id}>
@@ -156,7 +171,7 @@ export function GeofencePage() {
             value={form.deviceId}
             onChange={(event) => setForm((current) => ({ ...current, deviceId: Number(event.target.value) }))}
           >
-            {devices.map((device) => (
+            {devicesForSelectedProperty.map((device) => (
               <option key={device.id} value={device.id}>
                 {device.name}
               </option>

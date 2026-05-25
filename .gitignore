@@ -1,5 +1,12 @@
 node_modules/
 .vite/
+dist/
+**/dist/
+*.tsbuildinfo
+
+# Local demo/runtime data
+backend/agritrack.sqlite
+backend/agritrack-demo-store.json
 
 # Local Firebase credentials
 firebase.env

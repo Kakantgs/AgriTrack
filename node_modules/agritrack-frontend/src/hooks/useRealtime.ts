@@ -15,9 +15,9 @@ export function useRealtime() {
   useEffect(() => {
     api.getRealtimeSnapshot().then((data) => {
       setSnapshot(data);
-      setLatestAlert(data.latestAlert);
+      setLatestAlert(data?.latestAlert ?? null);
       setLastMessageAt(new Date().toISOString());
-    });
+    }).catch(() => setConnectionState("offline"));
 
     // WebSocket mantém mapa, dashboard e alertas sincronizados sem polling do frontend.
     const token = localStorage.getItem("agritrack-token");
@@ -26,7 +26,7 @@ export function useRealtime() {
       api.getRealtimeSnapshot()
         .then((data) => {
           setSnapshot(data);
-          setLatestAlert(data.latestAlert);
+          setLatestAlert(data?.latestAlert ?? null);
           setLastMessageAt(new Date().toISOString());
         })
         .catch(() => undefined);
@@ -37,12 +37,14 @@ export function useRealtime() {
     };
 
     socket.onmessage = (event) => {
-      const payload = JSON.parse(event.data) as RealtimePayload;
-      setSnapshot(payload);
-      setConnectionState("live");
-      setLastMessageAt(new Date().toISOString());
-      if (payload.latestAlert) {
+      try {
+        const payload = JSON.parse(event.data) as RealtimePayload;
+        setSnapshot(payload);
+        setConnectionState("live");
+        setLastMessageAt(new Date().toISOString());
         setLatestAlert(payload.latestAlert);
+      } catch {
+        setConnectionState("offline");
       }
     };
 
